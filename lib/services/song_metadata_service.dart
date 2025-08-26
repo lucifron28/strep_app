@@ -46,6 +46,7 @@ class SongMetadataService {
         title: songMetadata['title'] ?? song.title,
         artist: songMetadata['artist'] ?? song.artist,
         album: songMetadata['album'] ?? song.album,
+        customThumbnail: songMetadata['customThumbnail'],
       );
     }
     
@@ -60,6 +61,7 @@ class SongMetadataService {
       'title': song.title,
       'artist': song.artist,
       'album': song.album,
+      if (song.customThumbnail != null) 'customThumbnail': song.customThumbnail!,
     };
     
     await saveSongMetadata(metadata);
@@ -76,6 +78,7 @@ class SongMetadataService {
           title: songMetadata['title'] ?? song.title,
           artist: songMetadata['artist'] ?? song.artist,
           album: songMetadata['album'] ?? song.album,
+          customThumbnail: songMetadata['customThumbnail'],
         );
       }
       return song;
