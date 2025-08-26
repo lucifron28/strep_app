@@ -1,7 +1,7 @@
 class Song {
-  final String title;
-  final String artist;
-  final String album;
+  String title;
+  String artist;
+  String album;
   final String path;
   final Duration? duration;
   final String? albumArt;
@@ -24,6 +24,25 @@ class Song {
       artist: 'Unknown Artist',
       album: 'Unknown Album',
       path: path,
+    );
+  }
+
+  // Create a copy of the song with updated details
+  Song copyWith({
+    String? title,
+    String? artist,
+    String? album,
+    String? path,
+    Duration? duration,
+    String? albumArt,
+  }) {
+    return Song(
+      title: title ?? this.title,
+      artist: artist ?? this.artist,
+      album: album ?? this.album,
+      path: path ?? this.path,
+      duration: duration ?? this.duration,
+      albumArt: albumArt ?? this.albumArt,
     );
   }
 
