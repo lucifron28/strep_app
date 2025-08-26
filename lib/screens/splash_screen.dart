@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/dracula_theme.dart';
+import '../widgets/strep_icon.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -26,14 +27,9 @@ class SplashScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: ClipRRect(
+              child: StrepIcon(
+                size: 120,
                 borderRadius: BorderRadius.circular(24),
-                child: Image.asset(
-                  'assets/icons/icon.png',
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.cover,
-                ),
               ),
             ),
             
