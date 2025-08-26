@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import '../theme/dracula_theme.dart';
 import '../models/song.dart';
+import '../widgets/song_thumbnail.dart';
 import 'edit_song_dialog.dart';
 
 class SongOptionsBottomSheet extends StatelessWidget {
   final Song song;
   final Function(Song) onEditSong;
   final Function(Song)? onDeleteSong;
+  final Function(Song, String)? onChangeThumbnail;
 
   const SongOptionsBottomSheet({
     super.key,
     required this.song,
     required this.onEditSong,
     this.onDeleteSong,
+    this.onChangeThumbnail,
   });
 
   @override
@@ -47,18 +53,10 @@ class SongOptionsBottomSheet extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: DraculaTheme.currentLine,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.music_note,
-                    color: DraculaTheme.purple,
-                    size: 24,
-                  ),
+                SongThumbnail(
+                  song: song,
+                  size: 50,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -101,6 +99,13 @@ class SongOptionsBottomSheet extends StatelessWidget {
                 title: 'Edit Song Details',
                 subtitle: 'Change title, artist, and album',
                 onTap: () => _showEditDialog(context),
+              ),
+              _buildOption(
+                context,
+                icon: Icons.image,
+                title: 'Change Thumbnail',
+                subtitle: 'Set custom image for this song',
+                onTap: () => _changeThumbnail(context),
               ),
               _buildOption(
                 context,
@@ -415,5 +420,77 @@ class SongOptionsBottomSheet extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _changeThumbnail(BuildContext context) async {
+    Navigator.of(context).pop(); // Close bottom sheet first
+    
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 500,
+        maxHeight: 500,
+      );
+      
+      if (image != null) {
+        // Get app documents directory to store thumbnails
+        final Directory appDocDir = await getApplicationDocumentsDirectory();
+        final Directory thumbnailDir = Directory('${appDocDir.path}/thumbnails');
+        
+        // Create thumbnails directory if it doesn't exist
+        if (!await thumbnailDir.exists()) {
+          await thumbnailDir.create(recursive: true);
+        }
+        
+        // Generate unique filename based on song path hash
+        final String filename = 'thumb_${song.path.hashCode.abs()}.jpg';
+        final String thumbnailPath = '${thumbnailDir.path}/$filename';
+        
+        // Copy selected image to thumbnails directory
+        final File sourceFile = File(image.path);
+        await sourceFile.copy(thumbnailPath);
+        
+        // Call callback to update song with new thumbnail
+        if (onChangeThumbnail != null) {
+          onChangeThumbnail!(song, thumbnailPath);
+        }
+        
+        // Show success message
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Thumbnail updated for "${song.title}"',
+                style: TextStyle(color: DraculaTheme.background),
+              ),
+              backgroundColor: DraculaTheme.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to update thumbnail: $e',
+              style: TextStyle(color: DraculaTheme.background),
+            ),
+            backgroundColor: DraculaTheme.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
   }
 }
