@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/music_provider.dart';
 import '../theme/dracula_theme.dart';
 import '../services/audio_player_service.dart';
+import '../widgets/strep_icon.dart';
 import 'now_playing_screen.dart';
 
 class MusicListScreen extends StatelessWidget {
@@ -14,14 +15,9 @@ class MusicListScreen extends StatelessWidget {
       appBar: AppBar(
         title: Row(
           children: [
-            ClipRRect(
+            StrepIcon(
+              size: 32,
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                'assets/icons/icon.png',
-                width: 32,
-                height: 32,
-                fit: BoxFit.cover,
-              ),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -94,21 +90,9 @@ class MusicListScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.asset(
-                        'assets/icons/icon.png',
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+                  StrepIcon(
+                    size: 80,
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -173,16 +157,11 @@ class MusicListScreen extends StatelessWidget {
                                   color: DraculaTheme.background,
                                   size: 28,
                                 )
-                              : ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Opacity(
-                                    opacity: isCurrentSong ? 1.0 : 0.7,
-                                    child: Image.asset(
-                                      'assets/icons/icon.png',
-                                      width: 40,
-                                      height: 40,
-                                      fit: BoxFit.cover,
-                                    ),
+                              : Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: StrepIcon(
+                                    size: 40,
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
                                 ),
                         ),
@@ -239,21 +218,9 @@ class MusicListScreen extends StatelessWidget {
         ),
       ),
       child: ListTile(
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              'assets/icons/icon.png',
-              width: 48,
-              height: 48,
-              fit: BoxFit.cover,
-            ),
-          ),
+        leading: StrepIcon(
+          size: 48,
+          borderRadius: BorderRadius.circular(8),
         ),
         title: Text(
           musicProvider.currentSong!.title,
