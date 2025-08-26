@@ -5,6 +5,7 @@ import '../theme/dracula_theme.dart';
 import '../services/audio_player_service.dart';
 import '../widgets/strep_icon.dart';
 import '../widgets/song_options_bottom_sheet.dart';
+import '../widgets/song_thumbnail.dart';
 import 'now_playing_screen.dart';
 
 class MusicListScreen extends StatefulWidget {
@@ -224,7 +225,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
       child: Column(
         children: [
           ListTile(
-            leading: StrepIcon(
+            leading: SongThumbnail(
+              song: musicProvider.currentSong!,
               size: 48,
               borderRadius: BorderRadius.circular(8),
             ),
@@ -306,6 +308,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
         song: song,
         onEditSong: (updatedSong) {
           musicProvider.updateSongDetails(song, updatedSong);
+        },
+        onChangeThumbnail: (song, thumbnailPath) {
+          musicProvider.updateSongThumbnail(song, thumbnailPath);
         },
         onDeleteSong: (songToDelete) {
           musicProvider.deleteSong(songToDelete);
@@ -510,32 +515,18 @@ class _MusicListScreenState extends State<MusicListScreen> {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: padding, vertical: 4),
       child: ListTile(
-        leading: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: isCurrentSong ? DraculaTheme.purple : DraculaTheme.selection,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: StreamBuilder<PlayerState>(
-            stream: musicProvider.audioService.playerStateStream,
-            builder: (context, snapshot) {
-              final currentPlayerState = snapshot.data ?? musicProvider.playerState;
-              return isCurrentSong && currentPlayerState == PlayerState.playing
-                  ? Icon(
-                      Icons.pause,
-                      color: DraculaTheme.background,
-                      size: 28,
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: StrepIcon(
-                        size: 40,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    );
-            },
-          ),
+        leading: StreamBuilder<PlayerState>(
+          stream: musicProvider.audioService.playerStateStream,
+          builder: (context, snapshot) {
+            final currentPlayerState = snapshot.data ?? musicProvider.playerState;
+            return SongThumbnail(
+              song: song,
+              size: 56,
+              borderRadius: BorderRadius.circular(8),
+              isCurrentSong: isCurrentSong,
+              showPlayIcon: isCurrentSong && currentPlayerState == PlayerState.playing,
+            );
+          },
         ),
         title: Text(
           song.title,
