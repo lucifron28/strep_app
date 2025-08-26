@@ -4,11 +4,13 @@ import '../models/song.dart';
 import '../services/audio_player_service.dart';
 import '../services/music_service.dart';
 import '../services/song_metadata_service.dart';
+import '../services/song_storage_service.dart';
 
 class MusicProvider extends ChangeNotifier {
   final AudioPlayerService _audioService = AudioPlayerService();
   final MusicService _musicService = MusicService();
   final SongMetadataService _metadataService = SongMetadataService();
+  final SongStorageService _storageService = SongStorageService();
 
   List<Song> _songs = [];
   bool _isLoading = false;
@@ -49,7 +51,17 @@ class MusicProvider extends ChangeNotifier {
         return;
       }
 
-      final songs = await _musicService.loadMusicFiles();
+      // First try to load stored songs
+      List<Song> songs = await _storageService.loadSongs();
+      
+      // If no stored songs, scan for new ones
+      if (songs.isEmpty) {
+        songs = await _musicService.loadMusicFiles();
+        if (songs.isNotEmpty) {
+          // Save the newly found songs
+          await _storageService.saveSongs(songs);
+        }
+      }
       
       // Apply any saved metadata to the songs
       final songsWithMetadata = await _metadataService.applyMetadataToSongs(songs);
@@ -58,12 +70,35 @@ class MusicProvider extends ChangeNotifier {
       if (songs.isNotEmpty) {
         await _audioService.setPlaylist(songsWithMetadata);
       } else {
-        _setError('No MP3 files found. Please ensure you have MP3 files on your device.');
+        _setError('No MP3 files found. Use the import button to add music files.');
       }
     } catch (e) {
       _setError('Error loading music: $e');
     } finally {
       _setLoading(false);
+    }
+  }
+
+  Future<void> importMusic() async {
+    try {
+      final hasPermission = await _musicService.requestStoragePermission();
+      
+      if (!hasPermission) {
+        _setError('Storage permission is required to access music files');
+        return;
+      }
+
+      final newSongs = await _musicService.importMusicFiles();
+      
+      if (newSongs.isNotEmpty) {
+        // Add new songs to storage
+        await _storageService.addSongs(newSongs);
+        
+        // Reload the complete song list
+        await loadMusic();
+      }
+    } catch (e) {
+      _setError('Error importing music: $e');
     }
   }
 
@@ -165,6 +200,9 @@ class MusicProvider extends ChangeNotifier {
       
       // Remove from the songs list
       _songs.removeAt(index);
+      
+      // Remove from storage
+      await _storageService.removeSong(songToDelete.path);
       
       // Remove from metadata service
       await _metadataService.deleteSongMetadata(songToDelete.path);
