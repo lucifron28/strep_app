@@ -61,10 +61,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                             File(currentSong.albumArt!),
                             fit: BoxFit.cover,
                           )
-                        : Icon(
-                            Icons.music_note,
-                            size: 120,
-                            color: DraculaTheme.purple,
+                        : Image.asset(
+                            'assets/icons/icon.png',
+                            fit: BoxFit.cover,
                           ),
                   ),
                 ),
