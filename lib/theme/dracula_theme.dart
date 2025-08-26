@@ -81,7 +81,7 @@ class DraculaTheme {
         activeTrackColor: purple,
         inactiveTrackColor: currentLine,
         thumbColor: pink,
-        overlayColor: purple.withOpacity(0.2),
+        overlayColor: purple.withValues(alpha: 0.2),
         valueIndicatorColor: purple,
         valueIndicatorTextStyle: const TextStyle(color: background),
       ),
