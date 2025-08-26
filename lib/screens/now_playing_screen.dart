@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/music_provider.dart';
 import '../services/audio_player_service.dart';
 import '../theme/dracula_theme.dart';
-import '../widgets/strep_icon.dart';
+import '../widgets/song_thumbnail.dart';
 
 class NowPlayingScreen extends StatefulWidget {
   const NowPlayingScreen({super.key});
@@ -42,11 +41,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 
                 // Album Art
                 Container(
-                  width: 280,
-                  height: 280,
                   decoration: BoxDecoration(
-                    color: DraculaTheme.currentLine,
-                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
                         color: DraculaTheme.purple.withValues(alpha: 0.3),
@@ -55,17 +50,10 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                       ),
                     ],
                   ),
-                  child: ClipRRect(
+                  child: SongThumbnail(
+                    song: currentSong,
+                    size: 280,
                     borderRadius: BorderRadius.circular(16),
-                    child: currentSong.albumArt != null
-                        ? Image.file(
-                            File(currentSong.albumArt!),
-                            fit: BoxFit.cover,
-                          )
-                        : StrepIcon(
-                            size: 280,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
                   ),
                 ),
                 
