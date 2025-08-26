@@ -12,12 +12,26 @@ class MusicListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Strep',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/icons/icon.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Strep',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -80,10 +94,21 @@ class MusicListScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.music_note,
-                    size: 64,
-                    color: DraculaTheme.purple,
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/icons/icon.png',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -142,13 +167,24 @@ class MusicListScreen extends StatelessWidget {
                             color: isCurrentSong ? DraculaTheme.purple : DraculaTheme.selection,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(
-                            isCurrentSong && musicProvider.playerState == PlayerState.playing
-                                ? Icons.pause
-                                : Icons.music_note,
-                            color: isCurrentSong ? DraculaTheme.background : DraculaTheme.purple,
-                            size: 28,
-                          ),
+                          child: isCurrentSong && musicProvider.playerState == PlayerState.playing
+                              ? Icon(
+                                  Icons.pause,
+                                  color: DraculaTheme.background,
+                                  size: 28,
+                                )
+                              : ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Opacity(
+                                    opacity: isCurrentSong ? 1.0 : 0.7,
+                                    child: Image.asset(
+                                      'assets/icons/icon.png',
+                                      width: 40,
+                                      height: 40,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
                         ),
                         title: Text(
                           song.title,
@@ -207,12 +243,16 @@ class MusicListScreen extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: DraculaTheme.purple,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            Icons.music_note,
-            color: DraculaTheme.background,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              'assets/icons/icon.png',
+              width: 48,
+              height: 48,
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         title: Text(
