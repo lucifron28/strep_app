@@ -206,17 +206,23 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
               ),
             ],
           ),
-          child: IconButton(
-            onPressed: () => musicProvider.playPause(),
-            icon: Icon(
-              musicProvider.playerState == PlayerState.playing
-                  ? Icons.pause
-                  : musicProvider.playerState == PlayerState.loading
-                      ? Icons.hourglass_empty
-                      : Icons.play_arrow,
-              size: 40,
-              color: DraculaTheme.background,
-            ),
+          child: StreamBuilder<PlayerState>(
+            stream: musicProvider.audioService.playerStateStream,
+            builder: (context, snapshot) {
+              final currentPlayerState = snapshot.data ?? musicProvider.playerState;
+              return IconButton(
+                onPressed: () => musicProvider.playPause(),
+                icon: Icon(
+                  currentPlayerState == PlayerState.playing
+                      ? Icons.pause
+                      : currentPlayerState == PlayerState.loading
+                          ? Icons.hourglass_empty
+                          : Icons.play_arrow,
+                  size: 40,
+                  color: DraculaTheme.background,
+                ),
+              );
+            },
           ),
         ),
         
