@@ -133,6 +133,27 @@ class MusicProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateSongThumbnail(Song song, String thumbnailPath) async {
+    try {
+      final updatedSong = song.copyWith(customThumbnail: thumbnailPath);
+      
+      final index = _songs.indexWhere((s) => s.path == song.path);
+      if (index != -1) {
+        _songs[index] = updatedSong;
+        
+        await _metadataService.saveSongDetails(updatedSong);
+        
+        if (_audioService.currentSong?.path == song.path) {
+          await _audioService.updateCurrentSong(updatedSong);
+        }
+        
+        notifyListeners();
+      }
+    } catch (e) {
+      _setError('Error updating song thumbnail: $e');
+    }
+  }
+
   Future<void> deleteSong(Song songToDelete) async {
     try {
       // Find the song in the list
