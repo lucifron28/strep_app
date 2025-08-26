@@ -29,6 +29,10 @@ class MusicService {
   }
 
   Future<List<Song>> loadMusicFiles() async {
+    return await _searchForMusicFiles();
+  }
+
+  Future<List<Song>> importMusicFiles() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -46,9 +50,9 @@ class MusicService {
         return songs;
       }
 
-      return await _searchForMusicFiles();
+      return [];
     } catch (e) {
-      DebugLogger.log('Error loading music files: $e');
+      DebugLogger.log('Error importing music files: $e');
       return [];
     }
   }
