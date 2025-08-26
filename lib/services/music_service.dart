@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/song.dart';
+import '../utils/debug_logger.dart';
 
 class MusicService {
   static final MusicService _instance = MusicService._internal();
@@ -47,7 +48,7 @@ class MusicService {
 
       return await _searchForMusicFiles();
     } catch (e) {
-      print('Error loading music files: $e');
+      DebugLogger.log('Error loading music files: $e');
       return [];
     }
   }
@@ -70,7 +71,7 @@ class MusicService {
           searchPaths.add(externalDir.path);
         }
       } catch (e) {
-        print('Could not access external storage directory: $e');
+        DebugLogger.log('Could not access external storage directory: $e');
       }
 
       for (String path in searchPaths) {
@@ -80,11 +81,11 @@ class MusicService {
             await _scanDirectory(directory, songs);
           }
         } catch (e) {
-          print('Error scanning directory $path: $e');
+          DebugLogger.log('Error scanning directory $path: $e');
         }
       }
     } catch (e) {
-      print('Error in music file search: $e');
+      DebugLogger.log('Error in music file search: $e');
     }
 
     return songs;
@@ -98,7 +99,7 @@ class MusicService {
         }
       }
     } catch (e) {
-      print('Error scanning directory ${directory.path}: $e');
+      DebugLogger.log('Error scanning directory ${directory.path}: $e');
     }
   }
 }
