@@ -293,19 +293,23 @@ class MusicListScreen extends StatelessWidget {
         },
         onDeleteSong: (songToDelete) {
           musicProvider.deleteSong(songToDelete);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Removed "${songToDelete.title}" from library',
-                style: TextStyle(color: DraculaTheme.background),
-              ),
-              backgroundColor: DraculaTheme.green,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Removed "${songToDelete.title}" from library',
+                    style: TextStyle(color: DraculaTheme.background),
+                  ),
+                  backgroundColor: DraculaTheme.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              );
+            }
+          });
         },
       ),
     );
