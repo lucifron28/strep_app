@@ -45,9 +45,24 @@ class AudioPlayerService {
       ConcatenatingAudioSource(children: []),
     );
 
+    // Listen to player state changes and update internal state
     _audioPlayer.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        _onSongCompleted();
+      // Update internal player state based on actual player state
+      switch (state.processingState) {
+        case ProcessingState.idle:
+          _playerState = PlayerState.stopped;
+          break;
+        case ProcessingState.loading:
+        case ProcessingState.buffering:
+          _playerState = PlayerState.loading;
+          break;
+        case ProcessingState.ready:
+          _playerState = state.playing ? PlayerState.playing : PlayerState.paused;
+          break;
+        case ProcessingState.completed:
+          _playerState = PlayerState.stopped;
+          _onSongCompleted();
+          break;
       }
     });
   }
@@ -73,19 +88,19 @@ class AudioPlayerService {
   Future<void> play() async {
     if (_currentSong != null) {
       await _audioPlayer.play();
-      _playerState = PlayerState.playing;
+      // State will be updated automatically by the stream listener
     }
   }
 
   Future<void> pause() async {
     await _audioPlayer.pause();
-    _playerState = PlayerState.paused;
+    // State will be updated automatically by the stream listener
     await _saveCurrentPosition();
   }
 
   Future<void> stop() async {
     await _audioPlayer.stop();
-    _playerState = PlayerState.stopped;
+    // State will be updated automatically by the stream listener
     await _saveCurrentPosition();
   }
 
@@ -131,12 +146,41 @@ class AudioPlayerService {
     }
   }
 
+  Future<void> updateCurrentSong(Song updatedSong) async {
+    if (_currentSong != null && _currentSong!.path == updatedSong.path) {
+      _currentSong = updatedSong;
+      
+      // Update the song in the playlist as well
+      final index = _playlist.indexWhere((song) => song.path == updatedSong.path);
+      if (index != -1) {
+        _playlist[index] = updatedSong;
+      }
+      
+      await _saveCurrentSong();
+    }
+  }
+
+  Future<void> clearPlaylist() async {
+    _playlist.clear();
+    _currentSong = null;
+    _currentIndex = 0;
+    await _audioPlayer.stop();
+    await _audioPlayer.setAudioSource(
+      ConcatenatingAudioSource(children: []),
+    );
+    // Clear saved preferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('last_played_song_path');
+    await prefs.remove('last_played_index');
+    await prefs.remove('last_played_position');
+  }
+
   void _onSongCompleted() {
+    // Auto-play next song
     if (_currentIndex < _playlist.length - 1) {
       skipToNext();
-    } else {
-      _playerState = PlayerState.stopped;
     }
+    // If this was the last song, _playerState will be set to stopped by the stream listener
   }
 
   Future<void> _saveCurrentSong() async {
