@@ -4,6 +4,7 @@ import '../providers/music_provider.dart';
 import '../theme/dracula_theme.dart';
 import '../services/audio_player_service.dart';
 import '../widgets/strep_icon.dart';
+import '../widgets/song_options_bottom_sheet.dart';
 import 'now_playing_screen.dart';
 
 class MusicListScreen extends StatelessWidget {
@@ -151,19 +152,25 @@ class MusicListScreen extends StatelessWidget {
                             color: isCurrentSong ? DraculaTheme.purple : DraculaTheme.selection,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: isCurrentSong && musicProvider.playerState == PlayerState.playing
-                              ? Icon(
-                                  Icons.pause,
-                                  color: DraculaTheme.background,
-                                  size: 28,
-                                )
-                              : Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: StrepIcon(
-                                    size: 40,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
+                          child: StreamBuilder<PlayerState>(
+                            stream: musicProvider.audioService.playerStateStream,
+                            builder: (context, snapshot) {
+                              final currentPlayerState = snapshot.data ?? musicProvider.playerState;
+                              return isCurrentSong && currentPlayerState == PlayerState.playing
+                                  ? Icon(
+                                      Icons.pause,
+                                      color: DraculaTheme.background,
+                                      size: 28,
+                                    )
+                                  : Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: StrepIcon(
+                                        size: 40,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                    );
+                            },
+                          ),
                         ),
                         title: Text(
                           song.title,
@@ -184,7 +191,7 @@ class MusicListScreen extends StatelessWidget {
                             color: DraculaTheme.comment,
                           ),
                           onPressed: () {
-                            // TODO: Add song options menu
+                            _showSongOptions(context, song, musicProvider);
                           },
                         ),
                         selected: isCurrentSong,
@@ -237,14 +244,22 @@ class MusicListScreen extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              icon: Icon(
-                musicProvider.playerState == PlayerState.playing
-                    ? Icons.pause
-                    : Icons.play_arrow,
-                color: DraculaTheme.purple,
-              ),
-              onPressed: () => musicProvider.playPause(),
+            StreamBuilder<PlayerState>(
+              stream: musicProvider.audioService.playerStateStream,
+              builder: (context, snapshot) {
+                final currentPlayerState = snapshot.data ?? musicProvider.playerState;
+                return IconButton(
+                  icon: Icon(
+                    currentPlayerState == PlayerState.playing
+                        ? Icons.pause
+                        : currentPlayerState == PlayerState.loading
+                            ? Icons.hourglass_empty
+                            : Icons.play_arrow,
+                    color: DraculaTheme.purple,
+                  ),
+                  onPressed: () => musicProvider.playPause(),
+                );
+              },
             ),
             IconButton(
               icon: Icon(
@@ -259,6 +274,36 @@ class MusicListScreen extends StatelessWidget {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const NowPlayingScreen(),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showSongOptions(BuildContext context, song, MusicProvider musicProvider) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => SongOptionsBottomSheet(
+        song: song,
+        onEditSong: (updatedSong) {
+          musicProvider.updateSongDetails(song, updatedSong);
+        },
+        onDeleteSong: (songToDelete) {
+          musicProvider.deleteSong(songToDelete);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Removed "${songToDelete.title}" from library',
+                style: TextStyle(color: DraculaTheme.background),
+              ),
+              backgroundColor: DraculaTheme.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         },
