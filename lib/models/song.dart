@@ -5,6 +5,7 @@ class Song {
   final String path;
   final Duration? duration;
   final String? albumArt;
+  String? customThumbnail;
 
   Song({
     required this.title,
@@ -13,6 +14,7 @@ class Song {
     required this.path,
     this.duration,
     this.albumArt,
+    this.customThumbnail,
   });
 
   factory Song.fromPath(String path) {
@@ -35,6 +37,7 @@ class Song {
     String? path,
     Duration? duration,
     String? albumArt,
+    String? customThumbnail,
   }) {
     return Song(
       title: title ?? this.title,
@@ -43,6 +46,7 @@ class Song {
       path: path ?? this.path,
       duration: duration ?? this.duration,
       albumArt: albumArt ?? this.albumArt,
+      customThumbnail: customThumbnail ?? this.customThumbnail,
     );
   }
 
