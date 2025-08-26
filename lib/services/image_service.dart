@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_picker_android/image_picker_android.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import '../utils/debug_logger.dart';
@@ -13,22 +16,38 @@ class ImageService {
 
   Future<bool> requestPhotoPermission() async {
     if (Platform.isAndroid) {
-      var status = await Permission.photos.status;
-      
-      if (status.isDenied) {
-        status = await Permission.photos.request();
-      }
-      
-      // If photos permission is denied, try storage permission as fallback
-      if (status.isDenied) {
-        var storageStatus = await Permission.storage.status;
-        if (storageStatus.isDenied) {
-          storageStatus = await Permission.storage.request();
+      try {
+        final info = await DeviceInfoPlugin().androidInfo;
+        final sdk = info.version.sdkInt;
+        DebugLogger.log('Android SDK version: $sdk');
+        
+        if (sdk >= 33) {
+          // Android 13+: Use READ_MEDIA_IMAGES permission
+          final status = await Permission.photos.status;
+          DebugLogger.log('Photos permission status (API 33+): $status');
+          
+          if (status.isDenied) {
+            final result = await Permission.photos.request();
+            DebugLogger.log('Photos permission request result: $result');
+            return result.isGranted;
+          }
+          return status.isGranted;
+        } else {
+          // Android 12 and below: Use READ_EXTERNAL_STORAGE
+          final status = await Permission.storage.status;
+          DebugLogger.log('Storage permission status (API <=32): $status');
+          
+          if (status.isDenied) {
+            final result = await Permission.storage.request();
+            DebugLogger.log('Storage permission request result: $result');
+            return result.isGranted;
+          }
+          return status.isGranted;
         }
-        return storageStatus.isGranted;
+      } catch (e) {
+        DebugLogger.log('Error checking Android version or permissions: $e');
+        return false;
       }
-      
-      return status.isGranted;
     }
     
     return true; // iOS handles permissions automatically
@@ -36,13 +55,32 @@ class ImageService {
 
   Future<String?> pickImageForThumbnail(String songPath) async {
     try {
-      // Request permission first
-      final hasPermission = await requestPhotoPermission();
-      if (!hasPermission) {
-        DebugLogger.log('Photo permission not granted');
-        return null;
+      DebugLogger.log('Starting image picker for thumbnail');
+      
+      // Configure Android Photo Picker for better experience on Android 12 and below
+      final impl = ImagePickerPlatform.instance;
+      if (impl is ImagePickerAndroid) {
+        impl.useAndroidPhotoPicker = true;
+        DebugLogger.log('Android Photo Picker enabled');
       }
-
+      
+      // On Android 13+, the system Photo Picker handles permissions automatically
+      // On older versions, we need to request permission first
+      if (Platform.isAndroid) {
+        final info = await DeviceInfoPlugin().androidInfo;
+        final sdk = info.version.sdkInt;
+        
+        if (sdk < 33) {
+          // Android 12 and below: Request permission first
+          final hasPermission = await requestPhotoPermission();
+          if (!hasPermission) {
+            DebugLogger.log('Permission denied for Android API $sdk');
+            return null;
+          }
+        }
+        // Android 13+: No permission request needed, Photo Picker handles it
+      }
+      
       // Pick image from gallery
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -50,6 +88,8 @@ class ImageService {
         maxWidth: 500,
         maxHeight: 500,
       );
+      
+      DebugLogger.log('Image picker result: ${image?.path ?? 'null'}');
       
       if (image == null) {
         DebugLogger.log('No image selected');
