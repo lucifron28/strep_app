@@ -45,10 +45,18 @@ class _MusicListScreenState extends State<MusicListScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              context.read<MusicProvider>().importMusic();
+            },
+            tooltip: 'Import Music Files',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               context.read<MusicProvider>().loadMusic();
             },
+            tooltip: 'Refresh Library',
           ),
         ],
       ),
@@ -154,24 +162,31 @@ class _MusicListScreenState extends State<MusicListScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'No Music Found',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  Text(
+                    'Welcome to Strep!',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: DraculaTheme.purple,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
-                      'Tap the refresh button to browse for MP3 files on your device',
+                      'Import MP3 files to start building your music library',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 16),
                     ),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: () => musicProvider.loadMusic(),
-                    icon: const Icon(Icons.folder_open),
-                    label: const Text('Browse Files'),
+                    onPressed: () => musicProvider.importMusic(),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Import Music Files'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DraculaTheme.purple,
+                      foregroundColor: DraculaTheme.background,
+                    ),
                   ),
                 ],
               ),
