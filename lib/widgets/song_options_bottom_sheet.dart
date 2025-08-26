@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import '../theme/dracula_theme.dart';
 import '../models/song.dart';
 import '../widgets/song_thumbnail.dart';
+import '../services/image_service.dart';
 import 'edit_song_dialog.dart';
 
 class SongOptionsBottomSheet extends StatelessWidget {
@@ -426,32 +424,10 @@ class SongOptionsBottomSheet extends StatelessWidget {
     Navigator.of(context).pop(); // Close bottom sheet first
     
     try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-        maxWidth: 500,
-        maxHeight: 500,
-      );
+      final ImageService imageService = ImageService();
+      final String? thumbnailPath = await imageService.pickImageForThumbnail(song.path);
       
-      if (image != null) {
-        // Get app documents directory to store thumbnails
-        final Directory appDocDir = await getApplicationDocumentsDirectory();
-        final Directory thumbnailDir = Directory('${appDocDir.path}/thumbnails');
-        
-        // Create thumbnails directory if it doesn't exist
-        if (!await thumbnailDir.exists()) {
-          await thumbnailDir.create(recursive: true);
-        }
-        
-        // Generate unique filename based on song path hash
-        final String filename = 'thumb_${song.path.hashCode.abs()}.jpg';
-        final String thumbnailPath = '${thumbnailDir.path}/$filename';
-        
-        // Copy selected image to thumbnails directory
-        final File sourceFile = File(image.path);
-        await sourceFile.copy(thumbnailPath);
-        
+      if (thumbnailPath != null) {
         // Call callback to update song with new thumbnail
         if (onChangeThumbnail != null) {
           onChangeThumbnail!(song, thumbnailPath);
@@ -466,6 +442,23 @@ class SongOptionsBottomSheet extends StatelessWidget {
                 style: TextStyle(color: DraculaTheme.background),
               ),
               backgroundColor: DraculaTheme.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      } else {
+        // Show error message for no image selected or permission denied
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Failed to update thumbnail. Please check permissions.',
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: DraculaTheme.red,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
