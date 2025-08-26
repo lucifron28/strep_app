@@ -25,41 +25,90 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            StrepIcon(
-              size: 32,
-              borderRadius: BorderRadius.circular(8),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: DraculaTheme.backgroundGradient,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  DraculaTheme.background.withValues(alpha: 0.95),
+                  DraculaTheme.background.withValues(alpha: 0.85),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
             ),
-            const SizedBox(width: 12),
-            const Text(
-              'Strep',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
+          ),
+          title: Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: DraculaTheme.primaryGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: DraculaTheme.purple.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: StrepIcon(
+                  size: 32,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Text(
+                'Strep',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: DraculaTheme.currentLine.withValues(alpha: 0.7),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.add_rounded, size: 28),
+                onPressed: () {
+                  context.read<MusicProvider>().importMusic();
+                },
+                tooltip: 'Import Music Files',
+                color: DraculaTheme.purple,
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: DraculaTheme.currentLine.withValues(alpha: 0.7),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.refresh_rounded, size: 28),
+                onPressed: () {
+                  context.read<MusicProvider>().loadMusic();
+                },
+                tooltip: 'Refresh Library',
+                color: DraculaTheme.cyan,
               ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              context.read<MusicProvider>().importMusic();
-            },
-            tooltip: 'Import Music Files',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<MusicProvider>().loadMusic();
-            },
-            tooltip: 'Refresh Library',
-          ),
-        ],
-      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: DraculaTheme.currentLine,
@@ -153,42 +202,102 @@ class _MusicListScreenState extends State<MusicListScreen> {
           }
 
           if (musicProvider.songs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  StrepIcon(
-                    size: 80,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Welcome to Strep!',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: DraculaTheme.purple,
-                      fontWeight: FontWeight.bold,
+            return Container(
+              decoration: const BoxDecoration(
+                gradient: DraculaTheme.backgroundGradient,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: DraculaTheme.primaryGradient,
+                        boxShadow: [
+                          BoxShadow(
+                            color: DraculaTheme.purple.withValues(alpha: 0.4),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: StrepIcon(
+                        size: 120,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      'Import MP3 files to start building your music library',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16),
+                    const SizedBox(height: 32),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: DraculaTheme.currentLine.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: DraculaTheme.purple.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Welcome to Strep!',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              color: DraculaTheme.purple,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Import MP3 files to start building your music library',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: DraculaTheme.comment,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () => musicProvider.importMusic(),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Import Music Files'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: DraculaTheme.purple,
-                      foregroundColor: DraculaTheme.background,
+                    const SizedBox(height: 32),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: DraculaTheme.primaryGradient,
+                        boxShadow: [
+                          BoxShadow(
+                            color: DraculaTheme.purple.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: () => musicProvider.importMusic(),
+                        icon: const Icon(Icons.add_rounded, size: 24),
+                        label: const Text(
+                          'Import Music Files',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: DraculaTheme.background,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           }
@@ -211,29 +320,38 @@ class _MusicListScreenState extends State<MusicListScreen> {
             ],
           );
         },
-      ),
-    );
+      ), // Close Consumer
+    ), // Close Scaffold
+    ); // Close Container
   }
 
   Widget _buildMiniPlayer(BuildContext context, MusicProvider musicProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: DraculaTheme.currentLine,
+        gradient: LinearGradient(
+          colors: [
+            DraculaTheme.currentLine.withValues(alpha: 0.95),
+            DraculaTheme.background.withValues(alpha: 0.9),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
         border: Border(
           top: BorderSide(
-            color: DraculaTheme.selection,
-            width: 1,
-          ),
-          bottom: BorderSide(
-            color: DraculaTheme.selection,
+            color: DraculaTheme.purple.withValues(alpha: 0.4),
             width: 2,
           ),
         ),
         boxShadow: [
           BoxShadow(
             color: DraculaTheme.background.withValues(alpha: 0.8),
-            offset: const Offset(0, 2),
-            blurRadius: 4,
+            offset: const Offset(0, -4),
+            blurRadius: 12,
+          ),
+          BoxShadow(
+            color: DraculaTheme.purple.withValues(alpha: 0.1),
+            offset: const Offset(0, -2),
+            blurRadius: 6,
           ),
         ],
       ),
@@ -527,45 +645,111 @@ class _MusicListScreenState extends State<MusicListScreen> {
   Widget _buildSongTile(dynamic song, MusicProvider musicProvider, {double padding = 16.0}) {
     final isCurrentSong = musicProvider.currentSong == song;
     
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: padding, vertical: 4),
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: padding, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: isCurrentSong 
+          ? LinearGradient(
+              colors: [
+                DraculaTheme.purple.withValues(alpha: 0.1),
+                DraculaTheme.pink.withValues(alpha: 0.05),
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            )
+          : null,
+        color: isCurrentSong ? null : DraculaTheme.currentLine.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCurrentSong 
+            ? DraculaTheme.purple.withValues(alpha: 0.4)
+            : DraculaTheme.comment.withValues(alpha: 0.1),
+          width: isCurrentSong ? 2 : 1,
+        ),
+        boxShadow: isCurrentSong ? [
+          BoxShadow(
+            color: DraculaTheme.purple.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ] : [
+          BoxShadow(
+            color: DraculaTheme.background.withValues(alpha: 0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: StreamBuilder<PlayerState>(
           stream: musicProvider.audioService.playerStateStream,
           builder: (context, snapshot) {
             final currentPlayerState = snapshot.data ?? musicProvider.playerState;
-            return SongThumbnail(
-              song: song,
-              size: 56,
-              borderRadius: BorderRadius.circular(8),
-              isCurrentSong: isCurrentSong,
-              showPlayIcon: isCurrentSong && currentPlayerState == PlayerState.playing,
+            return Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: isCurrentSong 
+                      ? DraculaTheme.purple.withValues(alpha: 0.3)
+                      : DraculaTheme.background.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: SongThumbnail(
+                song: song,
+                size: 56,
+                borderRadius: BorderRadius.circular(12),
+                isCurrentSong: isCurrentSong,
+                showPlayIcon: isCurrentSong && currentPlayerState == PlayerState.playing,
+              ),
             );
           },
         ),
         title: Text(
           song.title,
           style: TextStyle(
-            fontWeight: isCurrentSong ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isCurrentSong ? FontWeight.bold : FontWeight.w600,
+            fontSize: 16,
             color: isCurrentSong ? DraculaTheme.purple : DraculaTheme.foreground,
+            letterSpacing: 0.2,
           ),
         ),
-        subtitle: Text(
-          song.artist,
-          style: TextStyle(
-            color: DraculaTheme.comment,
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            song.artist,
+            style: TextStyle(
+              color: isCurrentSong ? DraculaTheme.pink.withValues(alpha: 0.8) : DraculaTheme.comment,
+              fontSize: 14,
+              letterSpacing: 0.1,
+            ),
           ),
         ),
-        trailing: IconButton(
-          icon: Icon(
-            Icons.more_vert,
-            color: DraculaTheme.comment,
+        trailing: Container(
+          decoration: BoxDecoration(
+            color: DraculaTheme.currentLine.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(8),
           ),
-          onPressed: () {
-            _showSongOptions(context, song, musicProvider);
-          },
+          child: IconButton(
+            icon: Icon(
+              Icons.more_vert_rounded,
+              color: isCurrentSong ? DraculaTheme.pink : DraculaTheme.comment,
+              size: 20,
+            ),
+            onPressed: () {
+              _showSongOptions(context, song, musicProvider);
+            },
+          ),
         ),
         selected: isCurrentSong,
+        selectedTileColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         onTap: () {
           musicProvider.playSong(song);
         },
