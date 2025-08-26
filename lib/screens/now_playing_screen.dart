@@ -112,21 +112,25 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 Text(
                   currentSong.title,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
+                    color: DraculaTheme.foreground,
+                    letterSpacing: 0.5,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 
                 Text(
                   currentSong.artist,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
-                    color: DraculaTheme.comment,
+                    color: DraculaTheme.purple,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -135,9 +139,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 
                 Text(
                   currentSong.album,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 16,
-                    color: DraculaTheme.comment,
+                    color: DraculaTheme.cyan,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.2,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -175,31 +181,82 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
             
             return Column(
               children: [
-                Slider(
-                  value: duration.inMilliseconds > 0 
-                      ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
-                      : 0.0,
-                  onChanged: (value) {
-                    if (duration.inMilliseconds > 0) {
-                      final newPosition = Duration(
-                        milliseconds: (duration.inMilliseconds * value).round(),
-                      );
-                      musicProvider.seek(newPosition);
-                    }
-                  },
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: DraculaTheme.purple,
+                      inactiveTrackColor: DraculaTheme.currentLine.withValues(alpha: 0.4),
+                      thumbColor: DraculaTheme.pink,
+                      overlayColor: DraculaTheme.purple.withValues(alpha: 0.1),
+                      trackHeight: 4,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                      trackShape: const RoundedRectSliderTrackShape(),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: DraculaTheme.background.withValues(alpha: 0.3),
+                            offset: const Offset(0, 1),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Slider(
+                        value: duration.inMilliseconds > 0 
+                            ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
+                            : 0.0,
+                        onChanged: (value) {
+                          if (duration.inMilliseconds > 0) {
+                            final newPosition = Duration(
+                              milliseconds: (duration.inMilliseconds * value).round(),
+                            );
+                            musicProvider.seek(newPosition);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 8),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        _formatDuration(position),
-                        style: TextStyle(color: DraculaTheme.comment),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: DraculaTheme.currentLine.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          _formatDuration(position),
+                          style: const TextStyle(
+                            color: DraculaTheme.foreground,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
                       ),
-                      Text(
-                        _formatDuration(duration),
-                        style: TextStyle(color: DraculaTheme.comment),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: DraculaTheme.currentLine.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          _formatDuration(duration),
+                          style: const TextStyle(
+                            color: DraculaTheme.foreground,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -217,16 +274,29 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         // Previous
-        IconButton(
-          onPressed: musicProvider.currentIndex > 0
-              ? () => musicProvider.skipToPrevious()
-              : null,
-          icon: Icon(
-            Icons.skip_previous,
-            size: 40,
-            color: musicProvider.currentIndex > 0
-                ? DraculaTheme.purple
-                : DraculaTheme.comment,
+        Container(
+          decoration: BoxDecoration(
+            color: DraculaTheme.currentLine.withValues(alpha: 0.7),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: DraculaTheme.background.withValues(alpha: 0.5),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: musicProvider.currentIndex > 0
+                ? () => musicProvider.skipToPrevious()
+                : null,
+            icon: Icon(
+              Icons.skip_previous_rounded,
+              size: 36,
+              color: musicProvider.currentIndex > 0
+                  ? DraculaTheme.purple
+                  : DraculaTheme.comment,
+            ),
           ),
         ),
         
@@ -235,13 +305,19 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: DraculaTheme.purple,
+            gradient: DraculaTheme.primaryGradient,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: DraculaTheme.purple.withValues(alpha: 0.4),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+                color: DraculaTheme.purple.withValues(alpha: 0.5),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
+              ),
+              BoxShadow(
+                color: DraculaTheme.pink.withValues(alpha: 0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 8),
+                spreadRadius: -5,
               ),
             ],
           ),
@@ -253,11 +329,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 onPressed: () => musicProvider.playPause(),
                 icon: Icon(
                   currentPlayerState == PlayerState.playing
-                      ? Icons.pause
+                      ? Icons.pause_rounded
                       : currentPlayerState == PlayerState.loading
-                          ? Icons.hourglass_empty
-                          : Icons.play_arrow,
-                  size: 40,
+                          ? Icons.hourglass_empty_rounded
+                          : Icons.play_arrow_rounded,
+                  size: 42,
                   color: DraculaTheme.background,
                 ),
               );
@@ -266,16 +342,29 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
         ),
         
         // Next
-        IconButton(
-          onPressed: musicProvider.currentIndex < musicProvider.songs.length - 1
-              ? () => musicProvider.skipToNext()
-              : null,
-          icon: Icon(
-            Icons.skip_next,
-            size: 40,
-            color: musicProvider.currentIndex < musicProvider.songs.length - 1
-                ? DraculaTheme.purple
-                : DraculaTheme.comment,
+        Container(
+          decoration: BoxDecoration(
+            color: DraculaTheme.currentLine.withValues(alpha: 0.7),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: DraculaTheme.background.withValues(alpha: 0.5),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: musicProvider.currentIndex < musicProvider.songs.length - 1
+                ? () => musicProvider.skipToNext()
+                : null,
+            icon: Icon(
+              Icons.skip_next_rounded,
+              size: 36,
+              color: musicProvider.currentIndex < musicProvider.songs.length - 1
+                  ? DraculaTheme.purple
+                  : DraculaTheme.comment,
+            ),
           ),
         ),
       ],
