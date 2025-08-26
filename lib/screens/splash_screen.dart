@@ -21,7 +21,7 @@ class SplashScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: DraculaTheme.purple.withOpacity(0.4),
+                    color: DraculaTheme.purple.withValues(alpha: 0.4),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
