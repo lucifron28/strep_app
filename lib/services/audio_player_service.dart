@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/song.dart';
@@ -15,6 +16,8 @@ class AudioPlayerService {
   List<Song> _playlist = [];
   int _currentIndex = 0;
   PlayerState _playerState = PlayerState.stopped;
+  StreamSubscription? _playerStateSubscription;
+  bool _disposed = false;
 
   AudioPlayer get audioPlayer => _audioPlayer;
   Song? get currentSong => _currentSong;
@@ -46,7 +49,9 @@ class AudioPlayerService {
     );
 
     // Listen to player state changes and update internal state
-    _audioPlayer.playerStateStream.listen((state) {
+    _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
+      if (_disposed) return;
+      
       // Update internal player state based on actual player state
       switch (state.processingState) {
         case ProcessingState.idle:
@@ -215,6 +220,8 @@ class AudioPlayerService {
   }
 
   void dispose() {
+    _disposed = true;
+    _playerStateSubscription?.cancel();
     _audioPlayer.dispose();
   }
 }
