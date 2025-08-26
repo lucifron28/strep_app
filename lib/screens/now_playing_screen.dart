@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/music_provider.dart';
 import '../services/audio_player_service.dart';
 import '../theme/dracula_theme.dart';
+import '../widgets/strep_icon.dart';
 
 class NowPlayingScreen extends StatefulWidget {
   const NowPlayingScreen({super.key});
@@ -61,9 +62,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                             File(currentSong.albumArt!),
                             fit: BoxFit.cover,
                           )
-                        : Image.asset(
-                            'assets/icons/icon.png',
-                            fit: BoxFit.cover,
+                        : StrepIcon(
+                            size: 280,
+                            borderRadius: BorderRadius.circular(16),
                           ),
                   ),
                 ),
