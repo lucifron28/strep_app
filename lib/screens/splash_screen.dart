@@ -17,7 +17,6 @@ class SplashScreen extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: DraculaTheme.purple,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
@@ -27,10 +26,14 @@ class SplashScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                Icons.music_note,
-                size: 60,
-                color: DraculaTheme.background,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  'assets/icons/icon.png',
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             
