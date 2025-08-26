@@ -48,7 +48,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: DraculaTheme.purple.withOpacity(0.3),
+                        color: DraculaTheme.purple.withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -200,7 +200,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: DraculaTheme.purple.withOpacity(0.4),
+                color: DraculaTheme.purple.withValues(alpha: 0.4),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
