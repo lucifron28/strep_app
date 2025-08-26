@@ -42,6 +42,7 @@ dependencies:
   permission_handler: ^11.3.1
   file_picker: ^8.1.4
   path_provider: ^2.1.4
+  image_picker: ^1.0.8
   
   # State management
   provider: ^6.1.2
