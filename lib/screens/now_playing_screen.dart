@@ -15,14 +15,36 @@ class NowPlayingScreen extends StatefulWidget {
 class _NowPlayingScreenState extends State<NowPlayingScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Now Playing'),
-        leading: IconButton(
-          icon: const Icon(Icons.keyboard_arrow_down),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: DraculaTheme.backgroundGradient,
       ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text(
+            'Now Playing',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              letterSpacing: 0.5,
+            ),
+          ),
+          leading: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: DraculaTheme.currentLine.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 28),
+              onPressed: () => Navigator.of(context).pop(),
+              color: DraculaTheme.purple,
+            ),
+          ),
+        ),
       body: Consumer<MusicProvider>(
         builder: (context, musicProvider, child) {
           final currentSong = musicProvider.currentSong;
@@ -33,29 +55,56 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
             );
           }
 
-          return Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                const Spacer(),
-                
-                // Album Art
-                Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: DraculaTheme.purple.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+          return Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                colors: [
+                  DraculaTheme.purple.withValues(alpha: 0.1),
+                  DraculaTheme.background.withValues(alpha: 0.95),
+                ],
+                center: Alignment.center,
+                radius: 1.2,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  const Spacer(),
+                  
+                  // Enhanced Album Art
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      gradient: DraculaTheme.primaryGradient,
+                      boxShadow: [
+                        BoxShadow(
+                          color: DraculaTheme.purple.withValues(alpha: 0.4),
+                          blurRadius: 25,
+                          offset: const Offset(0, 12),
+                          spreadRadius: 2,
+                        ),
+                        BoxShadow(
+                          color: DraculaTheme.pink.withValues(alpha: 0.2),
+                          blurRadius: 40,
+                          offset: const Offset(0, 8),
+                          spreadRadius: -5,
+                        ),
+                      ],
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: DraculaTheme.background,
                       ),
-                    ],
+                      child: SongThumbnail(
+                        song: currentSong,
+                        size: 300,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
                   ),
-                  child: SongThumbnail(
-                    song: currentSong,
-                    size: 280,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
                 
                 const SizedBox(height: 32),
                 
@@ -106,9 +155,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 const Spacer(),
               ],
             ),
-          );
+          ),
+        );
         },
       ),
+    ),
     );
   }
 
