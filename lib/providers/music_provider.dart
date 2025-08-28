@@ -298,6 +298,20 @@ class MusicProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void playPrevious() {
+    if (_queueIndex > 0) {
+      _queueIndex--;
+    }
+    notifyListeners();
+  }
+
+  void playSongAt(int index) {
+    if (index >= 0 && index < _queue.length) {
+      _queueIndex = index;
+      notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
     _disposed = true;
