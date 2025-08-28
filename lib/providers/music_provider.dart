@@ -41,7 +41,14 @@ class MusicProvider extends ChangeNotifier {
     
     // Listen to player state changes and notify UI
     _playerStateSubscription = _audioService.playerStateStream.listen((_) {
-      if (_disposed) return; // Check if the provider has been disposed
+      if (_disposed) return;
+
+      // Sync queue index with audio service
+      final current = _audioService.currentSong;
+      final idx = _queue.indexWhere((s) => s.path == current?.path);
+      if (idx != -1 && idx != _queueIndex) {
+        _queueIndex = idx;
+      }
       notifyListeners();
     });
     
@@ -112,13 +119,22 @@ class MusicProvider extends ChangeNotifier {
   }
 
   Future<void> playSong(Song song) async {
-    try {
-      await _audioService.playSong(song);
-      // notifyListeners() will be called automatically by the stream listener
-    } catch (e) {
-      _setError('Error playing song: $e');
+  try {
+    // If song is not in queue, add it and set as current
+    final idx = _queue.indexWhere((s) => s.path == song.path);
+    if (idx == -1) {
+      _queue.add(song);
+      _queueIndex = _queue.length - 1;
+      await _audioService.setPlaylist(_queue);
+    } else {
+      _queueIndex = idx;
     }
+    await _audioService.playSong(song);
+    // notifyListeners() will be called by the stream listener
+  } catch (e) {
+    _setError('Error playing song: $e');
   }
+}
 
   Future<void> playPause() async {
     try {
