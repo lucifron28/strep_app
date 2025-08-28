@@ -270,17 +270,26 @@ class MusicProvider extends ChangeNotifier {
     }
   }
 
-  void setQueue(List<Song> songs, {int startIndex = 0}) {
+  void setQueue(List<Song> songs, {int startIndex = 0}) async {
     _queue
       ..clear()
       ..addAll(songs);
     _queueIndex = startIndex.clamp(0, _queue.length - 1);
     notifyListeners();
-    // TODO: Start playback after setting the queue
+
+    // Update the audio service playlist and play the selected song
+    // Ensures the queue is in sync with the Audio Service
+    await _audioService.setPlaylist(songs);
+    if (_queue.isNotEmpty) {
+      await _audioService.playSong(_queue[_queueIndex]);
+    }
+    notifyListeners();
   }
 
   void addToQueue(Song song) {
     _queue.add(song);
+    // Ensures the queue is in sync with the Audio Service
+    _audioService.setPlaylist(_queue);
     notifyListeners();
   }
 
@@ -290,6 +299,8 @@ class MusicProvider extends ChangeNotifier {
     if (wasCurrent && _queue.isNotEmpty) {
       _queueIndex = _queueIndex.clamp(0, _queue.length - 1);
     }
+    // Ensures the queue is in sync with the Audio Service
+    _audioService.setPlaylist(_queue);
     notifyListeners();
   }
 
@@ -297,6 +308,8 @@ class MusicProvider extends ChangeNotifier {
     if (_queueIndex < _queue.length - 1) {
       _queueIndex++;
     }
+    // Ensures the queue is in sync with the Audio Service
+    _audioService.setPlaylist(_queue);
     notifyListeners();
   }
 
@@ -304,12 +317,16 @@ class MusicProvider extends ChangeNotifier {
     if (_queueIndex > 0) {
       _queueIndex--;
     }
+    // Ensures the queue is in sync with the Audio Service
+    _audioService.setPlaylist(_queue);
     notifyListeners();
   }
 
   void playSongAt(int index) {
     if (index >= 0 && index < _queue.length) {
       _queueIndex = index;
+    // Ensures the queue is in sync with the Audio Service
+    _audioService.setPlaylist(_queue);
       notifyListeners();
     }
   }
