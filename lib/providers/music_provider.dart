@@ -23,7 +23,8 @@ class MusicProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   AudioPlayerService get audioService => _audioService;
 
-  // Song? get currentSong => _audioService.currentSong;
+  // The song currently playing in the audio service
+  Song? get currentSong => _audioService.currentSong;
   PlayerState get playerState => _audioService.playerState;
   int get currentIndex => _audioService.currentIndex;
 
@@ -32,7 +33,8 @@ class MusicProvider extends ChangeNotifier {
   
   List<Song> get queue => List.unmodifiable(_queue);
   int get queueIndex => _queueIndex;
-  Song? get currentSong => _queue.isNotEmpty ? _queue[_queueIndex] : null;
+  // The song currently selected in the queue
+  Song? get queuedSong => _queue.isNotEmpty ? _queue[_queueIndex] : null;
 
   Future<void> initialize() async {
     await _audioService.initialize();
