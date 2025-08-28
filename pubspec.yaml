@@ -56,6 +56,9 @@ dependencies:
   # Audio metadata
   audio_metadata_reader: ^0.0.4+7
 
+  # youtube downloader
+  youtube_explode_dart: ^2.5.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
