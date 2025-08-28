@@ -320,9 +320,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
             ],
           );
         },
-      ), // Close Consumer
-    ), // Close Scaffold
-    ); // Close Container
+      ),
+    ),
+    );
   }
 
   Widget _buildMiniPlayer(BuildContext context, MusicProvider musicProvider) {
