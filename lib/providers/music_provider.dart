@@ -23,9 +23,16 @@ class MusicProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   AudioPlayerService get audioService => _audioService;
 
-  Song? get currentSong => _audioService.currentSong;
+  // Song? get currentSong => _audioService.currentSong;
   PlayerState get playerState => _audioService.playerState;
   int get currentIndex => _audioService.currentIndex;
+
+  final List<Song> _queue = [];
+  int _queueIndex = 0;
+  
+  List<Song> get queue => List.unmodifiable(_queue);
+  int get queueIndex => _queueIndex;
+  Song? get currentSong => _queue.isNotEmpty ? _queue[_queueIndex] : null;
 
   Future<void> initialize() async {
     await _audioService.initialize();
@@ -259,6 +266,15 @@ class MusicProvider extends ChangeNotifier {
     if (!_disposed) {
       super.notifyListeners();
     }
+  }
+
+  void setQueue(List<Song> songs, {int startIndex = 0}) {
+    _queue
+      ..clear()
+      ..addAll(songs);
+    _queueIndex = startIndex.clamp(0, _queue.length - 1);
+    notifyListeners();
+    // TODO: Start playback after setting the queue
   }
 
   @override
