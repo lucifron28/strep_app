@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import '../theme/dracula_theme.dart';
-import '../widgets/strep_icon.dart';
+import '../widgets/vinyl_disk.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -13,7 +18,7 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo/Icon
+            // Logo/Icon (spinning vinyl disk)
             Container(
               width: 120,
               height: 120,
@@ -27,14 +32,14 @@ class SplashScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: StrepIcon(
+              child: VinylDisk(
                 size: 120,
-                borderRadius: BorderRadius.circular(24),
+                isSpinning: true,
+                primaryColor: DraculaTheme.purple,
+                accentColor: DraculaTheme.pink,
               ),
             ),
-            
             const SizedBox(height: 32),
-            
             // App Name
             Text(
               'Strep',
@@ -45,9 +50,7 @@ class SplashScreen extends StatelessWidget {
                 letterSpacing: 2,
               ),
             ),
-            
             const SizedBox(height: 8),
-            
             Text(
               'MP3 Player',
               style: TextStyle(
@@ -56,13 +59,7 @@ class SplashScreen extends StatelessWidget {
                 letterSpacing: 1,
               ),
             ),
-            
             const SizedBox(height: 48),
-            
-            // Loading indicator
-            const CircularProgressIndicator(
-              color: DraculaTheme.purple,
-            ),
           ],
         ),
       ),
