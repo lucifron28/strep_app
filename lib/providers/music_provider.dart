@@ -277,6 +277,27 @@ class MusicProvider extends ChangeNotifier {
     // TODO: Start playback after setting the queue
   }
 
+  void addToQueue(Song song) {
+    _queue.add(song);
+    notifyListeners();
+  }
+
+  void removeFromQueue(Song song) {
+    final wasCurrent = currentSong == song;
+    _queue.remove(song);
+    if (wasCurrent && _queue.isNotEmpty) {
+      _queueIndex = _queueIndex.clamp(0, _queue.length - 1);
+    }
+    notifyListeners();
+  }
+
+  void playNext() {
+    if (_queueIndex < _queue.length - 1) {
+      _queueIndex++;
+    }
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _disposed = true;
