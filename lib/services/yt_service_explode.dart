@@ -15,7 +15,7 @@ void downloadClient(String url) async {
   var manifest = await yt.videos.streamsClient.getManifest(url);
   var audioStreamInfo = manifest.audioOnly.withHighestBitrate();
 
-  var file = new File(video.title);
+  var file = File(video.title);
 
   var output = file.openWrite();
 
