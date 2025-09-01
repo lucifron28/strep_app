@@ -6,6 +6,7 @@ import '../services/audio_player_service.dart';
 import '../widgets/strep_icon.dart';
 import '../widgets/song_options_bottom_sheet.dart';
 import '../widgets/song_thumbnail.dart';
+import '../widgets/youtube_download_dialog.dart';
 import 'now_playing_screen.dart';
 
 class MusicListScreen extends StatefulWidget {
@@ -105,6 +106,28 @@ class _MusicListScreenState extends State<MusicListScreen> {
                 },
                 tooltip: 'Refresh Library',
                 color: DraculaTheme.cyan,
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: DraculaTheme.currentLine.withValues(alpha: 0.7),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.video_library_rounded, size: 28),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => YouTubeDownloadDialog(
+                      onSongDownloaded: (song) {
+                        context.read<MusicProvider>().addYouTubeSong(song);
+                      },
+                    ),
+                  );
+                },
+                tooltip: 'Download from YouTube',
+                color: DraculaTheme.red,
               ),
             ),
           ],
