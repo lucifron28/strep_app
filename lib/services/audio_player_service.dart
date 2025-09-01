@@ -44,10 +44,6 @@ class AudioPlayerService {
   Future<void> initialize() async {
     await _loadLastPlayedSong();
     
-    await _audioPlayer.setAudioSource(
-      ConcatenatingAudioSource(children: []),
-    );
-
     // Listen to player state changes and update internal state
     _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
       if (_disposed) return;
@@ -80,8 +76,8 @@ class AudioPlayerService {
       final audioSources = songs.map((song) => 
         AudioSource.file(song.path)).toList();
       
-      await _audioPlayer.setAudioSource(
-        ConcatenatingAudioSource(children: audioSources),
+      await _audioPlayer.setAudioSources(
+        audioSources,
         initialIndex: initialIndex,
       );
       
@@ -170,8 +166,8 @@ class AudioPlayerService {
     _currentSong = null;
     _currentIndex = 0;
     await _audioPlayer.stop();
-    await _audioPlayer.setAudioSource(
-      ConcatenatingAudioSource(children: []),
+    await _audioPlayer.setAudioSources(
+      []
     );
     // Clear saved preferences
     final prefs = await SharedPreferences.getInstance();
