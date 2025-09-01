@@ -91,4 +91,10 @@ class SongMetadataService {
     metadata.remove(songPath);
     await saveSongMetadata(metadata);
   }
+
+  // Clear all metadata
+  Future<void> clearAllMetadata() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_metadataKey);
+  }
 }
