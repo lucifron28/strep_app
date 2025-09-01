@@ -774,7 +774,12 @@ class _MusicListScreenState extends State<MusicListScreen> {
           borderRadius: BorderRadius.circular(16),
         ),
         onTap: () {
-          musicProvider.playSong(song);
+          final isCurrentSong = musicProvider.currentSong == song;
+          if (isCurrentSong) {
+            musicProvider.playPause();
+          } else {
+            musicProvider.playSong(song);
+          }
         },
       ),
     );
