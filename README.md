@@ -1,7 +1,7 @@
 
 # APK Beta Release
 
-[Download the latest beta APK here](build/app/outputs/flutter-apk/Strep.apk)
+[Download the latest beta APK here](https://github.com/lucifron28/strep_app/raw/refs/heads/main/build/app/outputs/flutter-apk/Strep.apk)
 
 # Strep Music Player
 
