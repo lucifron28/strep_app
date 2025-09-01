@@ -85,8 +85,13 @@ class MusicProvider extends ChangeNotifier {
       final songsWithMetadata = await _metadataService.applyMetadataToSongs(songs);
       _songs = songsWithMetadata;
       
+      // Clear the queue to ensure it's in sync with the current song list
+      _queue.clear();
+      _queueIndex = 0;
+      
       if (songs.isNotEmpty) {
-        await _audioService.setPlaylist(songsWithMetadata);
+        // Don't automatically set playlist, let user choose what to play
+        // await _audioService.setPlaylist(songsWithMetadata);
       } else {
         _setError('No MP3 files found. Use the import button to add music files.');
       }
@@ -121,22 +126,25 @@ class MusicProvider extends ChangeNotifier {
   }
 
   Future<void> playSong(Song song) async {
-  try {
-    // If song is not in queue, add it and set as current
-    final idx = _queue.indexWhere((s) => s.path == song.path);
-    if (idx == -1) {
-      _queue.add(song);
-      _queueIndex = _queue.length - 1;
-      await _audioService.setPlaylist(_queue);
-    } else {
-      _queueIndex = idx;
+    try {
+      // If song is not in queue, clear queue and add all songs starting from the selected one
+      final songIndex = _songs.indexWhere((s) => s.path == song.path);
+      if (songIndex != -1) {
+        // Create a new queue starting from the selected song
+        _queue.clear();
+        _queue.addAll(_songs.sublist(songIndex));
+        _queue.addAll(_songs.sublist(0, songIndex)); // Add songs before the selected one at the end
+        _queueIndex = 0; // Selected song is now at index 0
+        
+        await _audioService.setPlaylist(_queue, initialIndex: _queueIndex);
+        await _audioService.playSong(song);
+      }
+      
+      // notifyListeners() will be called by the stream listener
+    } catch (e) {
+      _setError('Error playing song: $e');
     }
-    await _audioService.playSong(song);
-    // notifyListeners() will be called by the stream listener
-  } catch (e) {
-    _setError('Error playing song: $e');
   }
-}
 
   Future<void> playPause() async {
     try {
@@ -228,6 +236,17 @@ class MusicProvider extends ChangeNotifier {
       // Remove from the songs list
       _songs.removeAt(index);
       
+      // Remove from the queue as well
+      final queueIndex = _queue.indexWhere((song) => song.path == songToDelete.path);
+      if (queueIndex != -1) {
+        _queue.removeAt(queueIndex);
+        // Adjust queue index if needed
+        if (_queueIndex >= queueIndex && _queueIndex > 0) {
+          _queueIndex--;
+        }
+        _queueIndex = _queueIndex.clamp(0, _queue.length - 1);
+      }
+      
       // Remove from storage
       await _storageService.removeSong(songToDelete.path);
       
@@ -239,21 +258,23 @@ class MusicProvider extends ChangeNotifier {
         // Stop the current playback
         await _audioService.stop();
         
-        // If there are still songs left, update the playlist
-        if (_songs.isNotEmpty) {
-          await _audioService.setPlaylist(_songs);
-          // Play the next song (or first if we deleted the last one)
-          final nextIndex = index < _songs.length ? index : 0;
-          if (nextIndex < _songs.length) {
-            await _audioService.playSong(_songs[nextIndex]);
+        // If there are still songs left in queue, update the playlist
+        if (_queue.isNotEmpty) {
+          await _audioService.setPlaylist(_queue, initialIndex: _queueIndex);
+          // Play the next song
+          if (_queueIndex < _queue.length) {
+            await _audioService.playSong(_queue[_queueIndex]);
           }
         } else {
           // No songs left, clear the playlist
           await _audioService.clearPlaylist();
         }
-      } else {
+      } else if (_queue.isNotEmpty) {
         // Just update the playlist without changing playback
-        await _audioService.setPlaylist(_songs);
+        await _audioService.setPlaylist(_queue);
+      } else {
+        // Queue is empty, clear audio service playlist
+        await _audioService.clearPlaylist();
       }
       
       notifyListeners();
@@ -363,6 +384,29 @@ class MusicProvider extends ChangeNotifier {
       }
     } catch (e) {
       _setError('Failed to add YouTube song: $e');
+    }
+  }
+
+  /// Clear all data (songs, metadata, playback state)
+  Future<void> clearAllData() async {
+    try {
+      // Clear songs list and queue
+      _songs.clear();
+      _queue.clear();
+      _queueIndex = 0;
+      
+      // Clear audio service
+      await _audioService.clearPlaylist();
+      
+      // Clear storage
+      await _storageService.clearSongs();
+      
+      // Clear metadata
+      await _metadataService.clearAllMetadata();
+      
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to clear all data: $e');
     }
   }
 
