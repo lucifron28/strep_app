@@ -5,12 +5,14 @@ import '../services/audio_player_service.dart';
 import '../services/music_service.dart';
 import '../services/song_metadata_service.dart';
 import '../services/song_storage_service.dart';
+import '../services/yt_service_explode.dart';
 
 class MusicProvider extends ChangeNotifier {
   final AudioPlayerService _audioService = AudioPlayerService();
   final MusicService _musicService = MusicService();
   final SongMetadataService _metadataService = SongMetadataService();
   final SongStorageService _storageService = SongStorageService();
+  final YouTubeDownloadService _youtubeService = YouTubeDownloadService();
 
   List<Song> _songs = [];
   bool _isLoading = false;
@@ -347,11 +349,29 @@ class MusicProvider extends ChangeNotifier {
     }
   }
 
+  /// Add a downloaded YouTube song to the library
+  Future<void> addYouTubeSong(Song song) async {
+    try {
+      // Add to songs list
+      if (!_songs.any((s) => s.path == song.path)) {
+        _songs.add(song);
+        
+        // Save to storage
+        await _storageService.saveSongs(_songs);
+        
+        notifyListeners();
+      }
+    } catch (e) {
+      _setError('Failed to add YouTube song: $e');
+    }
+  }
+
   @override
   void dispose() {
     _disposed = true;
     _playerStateSubscription?.cancel();
     _audioService.dispose();
+    _youtubeService.dispose();
     super.dispose();
   }
 }
