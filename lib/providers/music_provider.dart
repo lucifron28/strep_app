@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/song.dart';
 import '../services/audio_player_service.dart';
+import '../services/audio_service_integration.dart';
 import '../services/music_service.dart';
 import '../services/song_metadata_service.dart';
 import '../services/song_storage_service.dart';
@@ -9,6 +10,7 @@ import '../services/yt_service_explode.dart';
 
 class MusicProvider extends ChangeNotifier {
   final AudioPlayerService _audioService = AudioPlayerService();
+  final AudioServiceIntegration _audioServiceIntegration = AudioServiceIntegration();
   final MusicService _musicService = MusicService();
   final SongMetadataService _metadataService = SongMetadataService();
   final SongStorageService _storageService = SongStorageService();
@@ -40,6 +42,9 @@ class MusicProvider extends ChangeNotifier {
 
   Future<void> initialize() async {
     await _audioService.initialize();
+    
+    // Initialize audio service integration for notifications and lock screen controls
+    await _audioServiceIntegration.initialize();
     
     // Listen to player state changes and notify UI
     _playerStateSubscription = _audioService.playerStateStream.listen((_) {
@@ -142,6 +147,9 @@ class MusicProvider extends ChangeNotifier {
         
         await _audioService.setPlaylist(_queue, initialIndex: _queueIndex);
         await _audioService.playSong(song);
+        
+        // Sync with audio service integration for notifications (only set the playlist once)
+        await _audioServiceIntegration.updatePlaylist(_queue, initialIndex: _queueIndex);
       }
       
       // notifyListeners() will be called by the stream listener
@@ -153,6 +161,7 @@ class MusicProvider extends ChangeNotifier {
   Future<void> playPause() async {
     try {
       await _audioService.playPause();
+      // The notification controls will be updated automatically through StrepAudioHandler
       // notifyListeners() will be called automatically by the stream listener
     } catch (e) {
       _setError('Error toggling playback: $e');
@@ -162,6 +171,7 @@ class MusicProvider extends ChangeNotifier {
   Future<void> skipToNext() async {
     try {
       await _audioService.skipToNext();
+      // The notification controls will be updated automatically through StrepAudioHandler
       // notifyListeners() will be called automatically by the stream listener
     } catch (e) {
       _setError('Error skipping to next song: $e');
@@ -171,6 +181,7 @@ class MusicProvider extends ChangeNotifier {
   Future<void> skipToPrevious() async {
     try {
       await _audioService.skipToPrevious();
+      // The notification controls will be updated automatically through StrepAudioHandler
       // notifyListeners() will be called automatically by the stream listener
     } catch (e) {
       _setError('Error skipping to previous song: $e');
@@ -180,6 +191,7 @@ class MusicProvider extends ChangeNotifier {
   Future<void> seek(Duration position) async {
     try {
       await _audioService.seek(position);
+      // The notification position will be updated automatically through StrepAudioHandler
     } catch (e) {
       _setError('Error seeking: $e');
     }
