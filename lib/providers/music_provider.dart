@@ -69,17 +69,7 @@ class MusicProvider extends ChangeNotifier {
         return;
       }
 
-      // First try to load stored songs
       List<Song> songs = await _storageService.loadSongs();
-      
-      // If no stored songs, scan for new ones
-      if (songs.isEmpty) {
-        songs = await _musicService.loadMusicFiles();
-        if (songs.isNotEmpty) {
-          // Save the newly found songs
-          await _storageService.saveSongs(songs);
-        }
-      }
       
       // Apply any saved metadata to the songs
       final songsWithMetadata = await _metadataService.applyMetadataToSongs(songs);
@@ -89,12 +79,8 @@ class MusicProvider extends ChangeNotifier {
       _queue.clear();
       _queueIndex = 0;
       
-      if (songs.isNotEmpty) {
-        // Don't automatically set playlist, let user choose what to play
-        // await _audioService.setPlaylist(songsWithMetadata);
-      } else {
-        _setError('No MP3 files found. Use the import button to add music files.');
-      }
+      // Don't show error message if no songs - user can import manually
+      
     } catch (e) {
       _setError('Error loading music: $e');
     } finally {
@@ -111,14 +97,32 @@ class MusicProvider extends ChangeNotifier {
         return;
       }
 
+      // Scan device for music files or let user pick files
       final newSongs = await _musicService.importMusicFiles();
       
       if (newSongs.isNotEmpty) {
-        // Add new songs to storage
+        // Add new songs to storage (this handles duplicates)
         await _storageService.addSongs(newSongs);
         
-        // Reload the complete song list
+        // Reload the complete song list to include new songs
         await loadMusic();
+        
+        // Show success message
+        _clearError();
+      } else {
+        // If no songs found, offer to scan device storage
+        final deviceSongs = await _musicService.loadMusicFiles();
+        if (deviceSongs.isNotEmpty) {
+          // Add found songs to storage
+          await _storageService.addSongs(deviceSongs);
+          
+          // Reload the complete song list
+          await loadMusic();
+          
+          _clearError();
+        } else {
+          _setError('No music files found. Try selecting files manually or check if music files exist on your device.');
+        }
       }
     } catch (e) {
       _setError('Error importing music: $e');
