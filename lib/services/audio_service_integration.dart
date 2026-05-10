@@ -5,7 +5,8 @@ import '../models/song.dart';
 import 'audio_handler_service.dart';
 
 class AudioServiceIntegration {
-  static final AudioServiceIntegration _instance = AudioServiceIntegration._internal();
+  static final AudioServiceIntegration _instance =
+      AudioServiceIntegration._internal();
   factory AudioServiceIntegration() => _instance;
   AudioServiceIntegration._internal();
 
@@ -22,7 +23,7 @@ class AudioServiceIntegration {
       _audioHandler = await AudioService.init(
         builder: () => StrepAudioHandler(),
         config: const AudioServiceConfig(
-          androidNotificationChannelId: 'com.example.strep_app.channel.audio',
+          androidNotificationChannelId: 'com.lucifron.strep.channel.audio',
           androidNotificationChannelName: 'Strep Audio playback',
           androidNotificationChannelDescription: 'Controls for audio playback',
           androidNotificationOngoing: false,
@@ -59,13 +60,20 @@ class AudioServiceIntegration {
     }
 
     if (songs.isEmpty) {
-      _audioHandler?.queue.add([]);
+      if (_audioHandler is StrepAudioHandler) {
+        await (_audioHandler as StrepAudioHandler).clearPlaylist();
+      } else {
+        _audioHandler?.queue.add([]);
+      }
       return;
     }
 
     // Use the new method that handles songs directly
     if (_audioHandler is StrepAudioHandler) {
-      await (_audioHandler as StrepAudioHandler).setAudioSourceFromSongs(songs, initialIndex: initialIndex);
+      await (_audioHandler as StrepAudioHandler).setAudioSourceFromSongs(
+        songs,
+        initialIndex: initialIndex,
+      );
     }
   }
 
@@ -75,10 +83,9 @@ class AudioServiceIntegration {
 
     final mediaItem = songToMediaItem(song);
     await _audioHandler?.updateMediaItem(mediaItem);
-    
-    // Also trigger the handler to update its internal state
+
     if (_audioHandler is StrepAudioHandler) {
-      (_audioHandler as StrepAudioHandler).updateCurrentSong();
+      await (_audioHandler as StrepAudioHandler).replaceCurrentSong(song);
     }
   }
 
@@ -114,19 +121,25 @@ class AudioServiceIntegration {
     return [];
   }
 
-  // Note: The following methods now delegate to AudioPlayerService through StrepAudioHandler
-  // This ensures synchronization between the app and notification controls
-  
   // Play/Pause
   Future<void> playPause() async {
     if (!_initialized || _audioHandler == null) return;
-    
+
     if (_audioHandler!.playbackState.value.playing) {
       await _audioHandler?.pause();
     } else {
       await _audioHandler?.play();
     }
-    
+
+    if (_audioHandler is StrepAudioHandler) {
+      (_audioHandler as StrepAudioHandler).forceSync();
+    }
+  }
+
+  Future<void> play() async {
+    if (!_initialized || _audioHandler == null) return;
+    await _audioHandler?.play();
+
     if (_audioHandler is StrepAudioHandler) {
       (_audioHandler as StrepAudioHandler).forceSync();
     }
@@ -136,7 +149,7 @@ class AudioServiceIntegration {
   Future<void> skipToNext() async {
     if (!_initialized || _audioHandler == null) return;
     await _audioHandler?.skipToNext();
-    
+
     if (_audioHandler is StrepAudioHandler) {
       (_audioHandler as StrepAudioHandler).forceSync();
     }
@@ -146,7 +159,16 @@ class AudioServiceIntegration {
   Future<void> skipToPrevious() async {
     if (!_initialized || _audioHandler == null) return;
     await _audioHandler?.skipToPrevious();
-    
+
+    if (_audioHandler is StrepAudioHandler) {
+      (_audioHandler as StrepAudioHandler).forceSync();
+    }
+  }
+
+  Future<void> skipToQueueItem(int index) async {
+    if (!_initialized || _audioHandler == null) return;
+    await _audioHandler?.skipToQueueItem(index);
+
     if (_audioHandler is StrepAudioHandler) {
       (_audioHandler as StrepAudioHandler).forceSync();
     }
@@ -170,6 +192,6 @@ class AudioServiceIntegration {
   }
 
   bool get isPlaying => _audioHandler?.playbackState.value.playing ?? false;
-  
+
   String? get currentSongTitle => _audioHandler?.mediaItem.value?.title;
 }
