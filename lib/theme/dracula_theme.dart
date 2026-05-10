@@ -39,7 +39,6 @@ class DraculaTheme {
       primaryColor: purple,
       scaffoldBackgroundColor: background,
       fontFamily: 'Inter', // Modern font
-      
       // Enhanced app bar theme
       appBarTheme: AppBarTheme(
         backgroundColor: background,
@@ -49,10 +48,7 @@ class DraculaTheme {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
         ),
-        iconTheme: const IconThemeData(
-          color: purple,
-          size: 24,
-        ),
+        iconTheme: const IconThemeData(color: purple, size: 24),
         titleTextStyle: const TextStyle(
           color: foreground,
           fontSize: 20,
@@ -60,7 +56,7 @@ class DraculaTheme {
         ),
         toolbarTextStyle: const TextStyle(color: foreground),
       ),
-      
+
       // Enhanced color scheme
       colorScheme: ColorScheme.dark(
         primary: purple,
@@ -78,7 +74,7 @@ class DraculaTheme {
         outline: comment,
         shadow: Colors.black.withValues(alpha: 0.5),
       ),
-      
+
       // Enhanced card theme
       cardTheme: CardThemeData(
         color: currentLine,
@@ -86,88 +82,68 @@ class DraculaTheme {
         elevation: 6,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: purple.withValues(alpha: 0.1),
-            width: 1,
-          ),
+          side: BorderSide(color: purple.withValues(alpha: 0.1), width: 1),
         ),
         margin: const EdgeInsets.all(8),
       ),
-      
+
       // Enhanced list tile theme
       listTileTheme: ListTileThemeData(
         textColor: foreground,
         iconColor: purple,
         selectedTileColor: selection,
         selectedColor: pink,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
-      
+
       // Enhanced icon theme
-      iconTheme: const IconThemeData(
-        color: purple,
-        size: 24,
-      ),
-      
+      iconTheme: const IconThemeData(color: purple, size: 24),
+
       // Enhanced text theme
       textTheme: const TextTheme(
         displayLarge: TextStyle(
-          color: foreground, 
+          color: foreground,
           fontWeight: FontWeight.bold,
           letterSpacing: -0.5,
         ),
         displayMedium: TextStyle(
-          color: foreground, 
+          color: foreground,
           fontWeight: FontWeight.bold,
           letterSpacing: -0.25,
         ),
-        displaySmall: TextStyle(
-          color: foreground, 
-          fontWeight: FontWeight.bold,
-        ),
+        displaySmall: TextStyle(color: foreground, fontWeight: FontWeight.bold),
         headlineLarge: TextStyle(
-          color: foreground, 
+          color: foreground,
           fontWeight: FontWeight.bold,
           letterSpacing: -0.25,
         ),
         headlineMedium: TextStyle(
-          color: foreground, 
+          color: foreground,
           fontWeight: FontWeight.bold,
         ),
         headlineSmall: TextStyle(
-          color: foreground, 
+          color: foreground,
           fontWeight: FontWeight.w600,
         ),
         titleLarge: TextStyle(
-          color: foreground, 
+          color: foreground,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.15,
         ),
         titleMedium: TextStyle(
-          color: foreground, 
+          color: foreground,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.15,
         ),
         titleSmall: TextStyle(
-          color: foreground, 
+          color: foreground,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.1,
         ),
-        bodyLarge: TextStyle(
-          color: foreground,
-          letterSpacing: 0.5,
-        ),
-        bodyMedium: TextStyle(
-          color: foreground,
-          letterSpacing: 0.25,
-        ),
-        bodySmall: TextStyle(
-          color: comment,
-          letterSpacing: 0.4,
-        ),
+        bodyLarge: TextStyle(color: foreground, letterSpacing: 0.5),
+        bodyMedium: TextStyle(color: foreground, letterSpacing: 0.25),
+        bodySmall: TextStyle(color: comment, letterSpacing: 0.4),
         labelLarge: TextStyle(
           color: foreground,
           fontWeight: FontWeight.w500,
@@ -184,7 +160,7 @@ class DraculaTheme {
           letterSpacing: 1.5,
         ),
       ),
-      
+
       // Enhanced button themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -202,21 +178,19 @@ class DraculaTheme {
           ),
         ),
       ),
-      
+
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: purple,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: const TextStyle(
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
           ),
         ),
       ),
-      
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: purple,
@@ -231,7 +205,7 @@ class DraculaTheme {
           ),
         ),
       ),
-      
+
       // Enhanced slider theme
       sliderTheme: SliderThemeData(
         activeTrackColor: purple,
@@ -247,7 +221,7 @@ class DraculaTheme {
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
         overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
       ),
-      
+
       // Enhanced bottom navigation theme
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: background,
@@ -264,39 +238,31 @@ class DraculaTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
-      
+
       // Enhanced floating action button theme
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: pink,
         foregroundColor: background,
         elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      
+
       // Enhanced dialog theme
       dialogTheme: DialogThemeData(
         backgroundColor: currentLine,
         elevation: 12,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: purple.withValues(alpha: 0.2),
-            width: 1,
-          ),
+          side: BorderSide(color: purple.withValues(alpha: 0.2), width: 1),
         ),
         titleTextStyle: const TextStyle(
           color: foreground,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
-        contentTextStyle: const TextStyle(
-          color: foreground,
-          fontSize: 16,
-        ),
+        contentTextStyle: const TextStyle(color: foreground, fontSize: 16),
       ),
-      
+
       // Enhanced snack bar theme
       snackBarTheme: SnackBarThemeData(
         backgroundColor: currentLine,
@@ -304,13 +270,11 @@ class DraculaTheme {
           color: foreground,
           fontWeight: FontWeight.w500,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
         elevation: 6,
       ),
-      
+
       // Enhanced input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -340,7 +304,7 @@ class DraculaTheme {
         prefixIconColor: purple,
         suffixIconColor: purple,
       ),
-      
+
       // Enhanced switch theme
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
@@ -356,7 +320,7 @@ class DraculaTheme {
           return currentLine;
         }),
       ),
-      
+
       // Enhanced checkbox theme
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
@@ -367,11 +331,9 @@ class DraculaTheme {
         }),
         checkColor: WidgetStateProperty.all(background),
         side: const BorderSide(color: comment, width: 2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
-      
+
       // Enhanced radio theme
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
@@ -381,7 +343,7 @@ class DraculaTheme {
           return comment;
         }),
       ),
-      
+
       // Enhanced divider theme
       dividerTheme: DividerThemeData(
         color: comment.withValues(alpha: 0.3),
