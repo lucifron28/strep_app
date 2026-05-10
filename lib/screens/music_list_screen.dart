@@ -132,220 +132,226 @@ class _MusicListScreenState extends State<MusicListScreen> {
             ),
           ],
         ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: DraculaTheme.currentLine,
-          border: Border(
-            top: BorderSide(
-              color: DraculaTheme.purple.withValues(alpha: 0.3),
-              width: 2,
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: DraculaTheme.currentLine,
+            border: Border(
+              top: BorderSide(
+                color: DraculaTheme.purple.withValues(alpha: 0.3),
+                width: 2,
+              ),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: DraculaTheme.background.withValues(alpha: 0.9),
+                offset: const Offset(0, -2),
+                blurRadius: 6,
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: DraculaTheme.background.withValues(alpha: 0.9),
-              offset: const Offset(0, -2),
-              blurRadius: 6,
-            ),
-          ],
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            selectedItemColor: DraculaTheme.purple,
+            unselectedItemColor: DraculaTheme.comment,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.music_note),
+                label: 'All Songs',
+              ),
+              BottomNavigationBarItem(icon: Icon(Icons.album), label: 'Albums'),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person),
+                label: 'Artists',
+              ),
+            ],
+          ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: DraculaTheme.purple,
-          unselectedItemColor: DraculaTheme.comment,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.music_note),
-              label: 'All Songs',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.album),
-              label: 'Albums',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Artists',
-            ),
-          ],
-        ),
-      ),
-      body: Consumer2<MusicProvider, DownloadManagerService>(
-        builder: (context, musicProvider, downloadManager, child) {
-          if (musicProvider.isLoading) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: DraculaTheme.purple),
-                  SizedBox(height: 16),
-                  Text('Loading music files...'),
-                ],
-              ),
-            );
-          }
-
-          if (musicProvider.errorMessage != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: DraculaTheme.red,
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      musicProvider.errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      musicProvider.clearError();
-                      musicProvider.loadMusic();
-                    },
-                    child: const Text('Try Again'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (musicProvider.songs.isEmpty &&
-              downloadManager.visibleDownloads.isEmpty) {
-            return Container(
-              decoration: const BoxDecoration(
-                gradient: DraculaTheme.backgroundGradient,
-              ),
-              child: Center(
+        body: Consumer2<MusicProvider, DownloadManagerService>(
+          builder: (context, musicProvider, downloadManager, child) {
+            if (musicProvider.isLoading) {
+              return const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        gradient: DraculaTheme.primaryGradient,
-                        boxShadow: [
-                          BoxShadow(
-                            color: DraculaTheme.purple.withValues(alpha: 0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: StrepIcon(
-                        size: 120,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: DraculaTheme.currentLine.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: DraculaTheme.purple.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Welcome to Strep!',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              color: DraculaTheme.purple,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Import MP3, M4A, AAC, WAV, FLAC, OGG, or WEBM files to start building your music library',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: DraculaTheme.comment,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: DraculaTheme.primaryGradient,
-                        boxShadow: [
-                          BoxShadow(
-                            color: DraculaTheme.purple.withValues(alpha: 0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: () => musicProvider.importMusic(),
-                        icon: const Icon(Icons.add_rounded, size: 24),
-                        label: const Text(
-                          'Import Music Files',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: DraculaTheme.background,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ),
+                    CircularProgressIndicator(color: DraculaTheme.purple),
+                    SizedBox(height: 16),
+                    Text('Loading music files...'),
                   ],
                 ),
-              ),
-            );
-          }
+              );
+            }
 
-          return Column(
-            children: [
-              Expanded(
-                child: IndexedStack(
-                  index: _selectedIndex,
+            if (musicProvider.errorMessage != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildAllSongsTab(musicProvider),
-                    _buildAlbumsTab(musicProvider),
-                    _buildArtistsTab(musicProvider),
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: DraculaTheme.red,
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        musicProvider.errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        musicProvider.clearError();
+                        musicProvider.loadMusic();
+                      },
+                      child: const Text('Try Again'),
+                    ),
                   ],
                 ),
-              ),
-              // Mini player (if song is playing)
-              if (musicProvider.currentSong != null)
-                _buildMiniPlayer(context, musicProvider),
-            ],
-          );
-        },
+              );
+            }
+
+            if (musicProvider.songs.isEmpty &&
+                downloadManager.visibleDownloads.isEmpty) {
+              return Container(
+                decoration: const BoxDecoration(
+                  gradient: DraculaTheme.backgroundGradient,
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          gradient: DraculaTheme.primaryGradient,
+                          boxShadow: [
+                            BoxShadow(
+                              color: DraculaTheme.purple.withValues(alpha: 0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: StrepIcon(
+                          size: 120,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: DraculaTheme.currentLine.withValues(
+                            alpha: 0.5,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: DraculaTheme.purple.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Welcome to Strep!',
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(
+                                    color: DraculaTheme.purple,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: -0.5,
+                                  ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Import MP3, M4A, AAC, WAV, FLAC, OGG, or WEBM files to start building your music library',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: DraculaTheme.comment,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: DraculaTheme.primaryGradient,
+                          boxShadow: [
+                            BoxShadow(
+                              color: DraculaTheme.purple.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: () => musicProvider.importMusic(),
+                          icon: const Icon(Icons.add_rounded, size: 24),
+                          label: const Text(
+                            'Import Music Files',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: DraculaTheme.background,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return Column(
+              children: [
+                Expanded(
+                  child: IndexedStack(
+                    index: _selectedIndex,
+                    children: [
+                      _buildAllSongsTab(musicProvider),
+                      _buildAlbumsTab(musicProvider),
+                      _buildArtistsTab(musicProvider),
+                    ],
+                  ),
+                ),
+                // Mini player (if song is playing)
+                if (musicProvider.currentSong != null)
+                  _buildMiniPlayer(context, musicProvider),
+              ],
+            );
+          },
+        ),
       ),
-    ),
     );
   }
 
@@ -403,16 +409,19 @@ class _MusicListScreenState extends State<MusicListScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 StreamBuilder<PlayerState>(
-                  stream: musicProvider.positionStream.map((_) => musicProvider.playerState),
+                  stream: musicProvider.positionStream.map(
+                    (_) => musicProvider.playerState,
+                  ),
                   builder: (context, snapshot) {
                     final currentPlayerState = musicProvider.playerState;
                     return IconButton(
                       icon: Icon(
                         currentPlayerState.playing
                             ? Icons.pause
-                            : currentPlayerState.processingState == ProcessingState.loading
-                                ? Icons.hourglass_empty
-                                : Icons.play_arrow,
+                            : currentPlayerState.processingState ==
+                                  ProcessingState.loading
+                            ? Icons.hourglass_empty
+                            : Icons.play_arrow,
                         color: DraculaTheme.purple,
                       ),
                       onPressed: () => musicProvider.playPause(),
@@ -420,10 +429,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                   },
                 ),
                 IconButton(
-                  icon: Icon(
-                    Icons.skip_next,
-                    color: DraculaTheme.purple,
-                  ),
+                  icon: Icon(Icons.skip_next, color: DraculaTheme.purple),
                   onPressed: () => musicProvider.skipToNext(),
                 ),
               ],
@@ -537,15 +543,12 @@ class _MusicListScreenState extends State<MusicListScreen> {
           builder: (context, downloadManager, child) {
             final activeDownloads = downloadManager.activeDownloads;
             return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            '${musicProvider.songs.length} songs${activeDownloads.isNotEmpty ? ', ${activeDownloads.length} downloading' : ''}',
-            style: TextStyle(
-              color: DraculaTheme.comment,
-              fontSize: 16,
-            ),
-          ),
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                '${musicProvider.songs.length} songs${activeDownloads.isNotEmpty ? ', ${activeDownloads.length} downloading' : ''}',
+                style: TextStyle(color: DraculaTheme.comment, fontSize: 16),
+              ),
             );
           },
         ),
@@ -574,7 +577,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                     final downloadItem = visibleDownloads[index];
                     return _buildDownloadTile(downloadItem, musicProvider);
                   }
-                  
+
                   // Then show regular songs
                   final songIndex = index - visibleDownloads.length;
                   final song = musicProvider.songs[songIndex];
@@ -624,7 +627,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
   Widget _buildAlbumsTab(MusicProvider musicProvider) {
     final albumMap = <String, List<Song>>{};
-    
+
     // Group songs by album
     for (final song in musicProvider.songs) {
       final albumName = song.album.isEmpty ? 'Unknown Album' : song.album;
@@ -652,10 +655,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             '${albums.length} albums',
-            style: TextStyle(
-              color: DraculaTheme.comment,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: DraculaTheme.comment, fontSize: 16),
           ),
         ),
         // Album list
@@ -665,7 +665,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
             itemBuilder: (context, index) {
               final albumName = albums[index];
               final albumSongs = albumMap[albumName]!;
-              
+
               return ExpansionTile(
                 leading: Container(
                   width: 56,
@@ -695,11 +695,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
                 collapsedIconColor: DraculaTheme.comment,
                 children: albumSongs
                     .map(
-                      (song) => _buildSongTile(
-                        song,
-                        musicProvider,
-                        padding: 32.0,
-                      ),
+                      (song) =>
+                          _buildSongTile(song, musicProvider, padding: 32.0),
                     )
                     .toList(),
               );
@@ -712,7 +709,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
 
   Widget _buildArtistsTab(MusicProvider musicProvider) {
     final artistMap = <String, List<Song>>{};
-    
+
     // Group songs by artist
     for (final song in musicProvider.songs) {
       final artistName = song.artist.isEmpty ? 'Unknown Artist' : song.artist;
@@ -740,10 +737,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
           padding: const EdgeInsets.all(16),
           child: Text(
             '${artists.length} artists',
-            style: TextStyle(
-              color: DraculaTheme.comment,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: DraculaTheme.comment, fontSize: 16),
           ),
         ),
         // Artist list
@@ -753,7 +747,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
             itemBuilder: (context, index) {
               final artistName = artists[index];
               final artistSongs = artistMap[artistName]!;
-              
+
               return ExpansionTile(
                 leading: Container(
                   width: 56,
@@ -783,11 +777,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
                 collapsedIconColor: DraculaTheme.comment,
                 children: artistSongs
                     .map(
-                      (song) => _buildSongTile(
-                        song,
-                        musicProvider,
-                        padding: 32.0,
-                      ),
+                      (song) =>
+                          _buildSongTile(song, musicProvider, padding: 32.0),
                     )
                     .toList(),
               );
@@ -803,9 +794,11 @@ class _MusicListScreenState extends State<MusicListScreen> {
     MusicProvider musicProvider, {
     double padding = 16.0,
   }) {
-    final canCancel = downloadItem.status == DownloadStatus.queued ||
+    final canCancel =
+        downloadItem.status == DownloadStatus.queued ||
         downloadItem.status == DownloadStatus.downloading;
-    final canRetry = downloadItem.status == DownloadStatus.failed ||
+    final canRetry =
+        downloadItem.status == DownloadStatus.failed ||
         downloadItem.status == DownloadStatus.cancelled;
 
     return Container(
@@ -848,11 +841,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Icon(
-                Icons.cloud_download,
-                color: DraculaTheme.cyan,
-                size: 24,
-              ),
+              Icon(Icons.cloud_download, color: DraculaTheme.cyan, size: 24),
               Positioned(
                 bottom: 4,
                 right: 4,
@@ -946,9 +935,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
         ),
         selected: false,
         selectedTileColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onTap: () {
           // Show download details or options
           ScaffoldMessenger.of(context).showSnackBar(
@@ -990,46 +977,52 @@ class _MusicListScreenState extends State<MusicListScreen> {
     double padding = 16.0,
   }) {
     final isCurrentSong = musicProvider.currentSong == song;
-    
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: padding, vertical: 6),
       decoration: BoxDecoration(
-        gradient: isCurrentSong 
-          ? LinearGradient(
-              colors: [
-                DraculaTheme.purple.withValues(alpha: 0.1),
-                DraculaTheme.pink.withValues(alpha: 0.05),
-              ],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            )
-          : null,
-        color: isCurrentSong ? null : DraculaTheme.currentLine.withValues(alpha: 0.7),
+        gradient: isCurrentSong
+            ? LinearGradient(
+                colors: [
+                  DraculaTheme.purple.withValues(alpha: 0.1),
+                  DraculaTheme.pink.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              )
+            : null,
+        color: isCurrentSong
+            ? null
+            : DraculaTheme.currentLine.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isCurrentSong 
-            ? DraculaTheme.purple.withValues(alpha: 0.4)
-            : DraculaTheme.comment.withValues(alpha: 0.1),
+          color: isCurrentSong
+              ? DraculaTheme.purple.withValues(alpha: 0.4)
+              : DraculaTheme.comment.withValues(alpha: 0.1),
           width: isCurrentSong ? 2 : 1,
         ),
-        boxShadow: isCurrentSong ? [
-          BoxShadow(
-            color: DraculaTheme.purple.withValues(alpha: 0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ] : [
-          BoxShadow(
-            color: DraculaTheme.background.withValues(alpha: 0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isCurrentSong
+            ? [
+                BoxShadow(
+                  color: DraculaTheme.purple.withValues(alpha: 0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: DraculaTheme.background.withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: StreamBuilder<PlayerState>(
-          stream: musicProvider.positionStream.map((_) => musicProvider.playerState),
+          stream: musicProvider.positionStream.map(
+            (_) => musicProvider.playerState,
+          ),
           builder: (context, snapshot) {
             final currentPlayerState = musicProvider.playerState;
             return Container(
@@ -1037,9 +1030,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: isCurrentSong 
-                      ? DraculaTheme.purple.withValues(alpha: 0.3)
-                      : DraculaTheme.background.withValues(alpha: 0.2),
+                    color: isCurrentSong
+                        ? DraculaTheme.purple.withValues(alpha: 0.3)
+                        : DraculaTheme.background.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1060,7 +1053,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
           style: TextStyle(
             fontWeight: isCurrentSong ? FontWeight.bold : FontWeight.w600,
             fontSize: 16,
-            color: isCurrentSong ? DraculaTheme.purple : DraculaTheme.foreground,
+            color: isCurrentSong
+                ? DraculaTheme.purple
+                : DraculaTheme.foreground,
             letterSpacing: 0.2,
           ),
         ),
@@ -1069,7 +1064,9 @@ class _MusicListScreenState extends State<MusicListScreen> {
           child: Text(
             song.artist,
             style: TextStyle(
-              color: isCurrentSong ? DraculaTheme.pink.withValues(alpha: 0.8) : DraculaTheme.comment,
+              color: isCurrentSong
+                  ? DraculaTheme.pink.withValues(alpha: 0.8)
+                  : DraculaTheme.comment,
               fontSize: 14,
               letterSpacing: 0.1,
             ),
@@ -1093,9 +1090,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
         ),
         selected: isCurrentSong,
         selectedTileColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onTap: () {
           if (isCurrentSong) {
             musicProvider.playPause();
