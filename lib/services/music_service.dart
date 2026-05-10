@@ -1,67 +1,132 @@
 import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 import '../models/song.dart';
 import '../utils/debug_logger.dart';
+
+class MusicPermissionResult {
+  final bool granted;
+  final bool permanentlyDenied;
+  final String? message;
+
+  const MusicPermissionResult({
+    required this.granted,
+    this.permanentlyDenied = false,
+    this.message,
+  });
+}
 
 class MusicService {
   static final MusicService _instance = MusicService._internal();
   factory MusicService() => _instance;
   MusicService._internal();
 
+  static const List<String> supportedExtensions = [
+    'mp3',
+    'm4a',
+    'aac',
+    'wav',
+    'flac',
+    'ogg',
+    'webm',
+  ];
+
   Future<bool> requestStoragePermission() async {
-    var status = await Permission.storage.status;
-    
-    if (status.isDenied) {
-      status = await Permission.storage.request();
+    final result = await requestAudioLibraryPermission();
+    return result.granted;
+  }
+
+  Future<MusicPermissionResult> requestAudioLibraryPermission() async {
+    if (!Platform.isAndroid) {
+      return const MusicPermissionResult(granted: true);
     }
 
-    if (status.isDenied) {
-      var manageExternalStorageStatus = await Permission.manageExternalStorage.status;
-      if (manageExternalStorageStatus.isDenied) {
-        manageExternalStorageStatus = await Permission.manageExternalStorage.request();
+    try {
+      final info = await DeviceInfoPlugin().androidInfo;
+      final permission = info.version.sdkInt >= 33
+          ? Permission.audio
+          : Permission.storage;
+      var status = await permission.status;
+
+      if (status.isDenied) {
+        status = await permission.request();
       }
-      return manageExternalStorageStatus.isGranted;
-    }
 
-    return status.isGranted;
+      if (status.isGranted || status.isLimited) {
+        return const MusicPermissionResult(granted: true);
+      }
+
+      final permanentlyDenied = status.isPermanentlyDenied;
+      return MusicPermissionResult(
+        granted: false,
+        permanentlyDenied: permanentlyDenied,
+        message: permanentlyDenied
+            ? 'Audio permission is permanently denied. Enable it in Android settings to scan device folders.'
+            : 'Audio permission is required to scan device folders.',
+      );
+    } catch (e) {
+      DebugLogger.log('Error requesting audio permission: $e');
+      return const MusicPermissionResult(
+        granted: false,
+        message: 'Could not check audio permission.',
+      );
+    }
+  }
+
+  Future<void> openSettings() async {
+    await openAppSettings();
   }
 
   Future<List<Song>> loadMusicFiles() async {
-    return await _searchForMusicFiles();
+    final permission = await requestAudioLibraryPermission();
+    if (!permission.granted) {
+      DebugLogger.log(permission.message ?? 'Audio permission denied');
+      return [];
+    }
+
+    return _searchForMusicFiles();
   }
 
   Future<List<Song>> importMusicFiles() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['mp3'],
+        allowedExtensions: supportedExtensions,
         allowMultiple: true,
       );
 
-      if (result != null && result.files.isNotEmpty) {
-        List<Song> songs = [];
-        for (PlatformFile file in result.files) {
-          if (file.path != null) {
-            songs.add(Song.fromPath(file.path!));
-          }
-        }
-        return songs;
+      if (result == null || result.files.isEmpty) {
+        return [];
       }
 
-      return [];
+      final songs = <Song>[];
+      for (final file in result.files) {
+        final path = file.path;
+        if (path != null && isSupportedAudioFile(path)) {
+          songs.add(Song.fromPath(path));
+        }
+      }
+      return songs;
     } catch (e) {
       DebugLogger.log('Error importing music files: $e');
       return [];
     }
   }
 
+  static bool isSupportedAudioFile(String path) {
+    final extension = path.split('.').last.toLowerCase();
+    return supportedExtensions.contains(extension);
+  }
+
   Future<List<Song>> _searchForMusicFiles() async {
-    List<Song> songs = [];
-    
+    final songs = <Song>[];
+
     try {
-      List<String> searchPaths = [
+      final searchPaths = <String>[
         '/storage/emulated/0/Music',
         '/storage/emulated/0/Download',
         '/storage/emulated/0/Documents',
@@ -78,7 +143,7 @@ class MusicService {
         DebugLogger.log('Could not access external storage directory: $e');
       }
 
-      for (String path in searchPaths) {
+      for (final path in searchPaths.toSet()) {
         try {
           final directory = Directory(path);
           if (await directory.exists()) {
@@ -97,8 +162,8 @@ class MusicService {
 
   Future<void> _scanDirectory(Directory directory, List<Song> songs) async {
     try {
-      await for (FileSystemEntity entity in directory.list(recursive: true)) {
-        if (entity is File && entity.path.toLowerCase().endsWith('.mp3')) {
+      await for (final entity in directory.list(recursive: true)) {
+        if (entity is File && isSupportedAudioFile(entity.path)) {
           songs.add(Song.fromPath(entity.path));
         }
       }
