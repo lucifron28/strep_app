@@ -361,7 +361,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
             ],
           ),
           child: StreamBuilder<PlayerState>(
-            stream: musicProvider.positionStream.map((_) => musicProvider.playerState),
+            stream: musicProvider.positionStream.map(
+              (_) => musicProvider.playerState,
+            ),
             builder: (context, snapshot) {
               final currentPlayerState = musicProvider.playerState;
               return IconButton(
@@ -369,7 +371,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                 icon: Icon(
                   currentPlayerState.playing
                       ? Icons.pause_rounded
-                      : currentPlayerState.processingState == ProcessingState.loading
+                      : currentPlayerState.processingState ==
+                            ProcessingState.loading
                       ? Icons.hourglass_empty_rounded
                       : Icons.play_arrow_rounded,
                   size: 42,
@@ -395,13 +398,13 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           ),
           child: IconButton(
             onPressed:
-                musicProvider.currentIndex < musicProvider.songs.length - 1
+                musicProvider.currentIndex < musicProvider.queue.length - 1
                 ? () => musicProvider.skipToNext()
                 : null,
             icon: Icon(
               Icons.skip_next_rounded,
               size: 36,
-              color: musicProvider.currentIndex < musicProvider.songs.length - 1
+              color: musicProvider.currentIndex < musicProvider.queue.length - 1
                   ? DraculaTheme.purple
                   : DraculaTheme.comment,
             ),
