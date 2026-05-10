@@ -22,14 +22,14 @@ class MusicProvider extends ChangeNotifier {
     YouTubeDownloadService? youtubeService,
     List<Song>? initialSongs,
     bool listenToDownloads = true,
-  })  : _audioServiceIntegration =
-            audioServiceIntegration ?? AudioServiceIntegration(),
-        _downloadManager = downloadManager ?? DownloadManagerService(),
-        _musicService = musicService ?? MusicService(),
-        _metadataService = metadataService ?? SongMetadataService(),
-        _storageService = storageService ?? SongStorageService(),
-        _youtubeService = youtubeService ?? YouTubeDownloadService(),
-        _songs = List<Song>.from(initialSongs ?? const []) {
+  }) : _audioServiceIntegration =
+           audioServiceIntegration ?? AudioServiceIntegration(),
+       _downloadManager = downloadManager ?? DownloadManagerService(),
+       _musicService = musicService ?? MusicService(),
+       _metadataService = metadataService ?? SongMetadataService(),
+       _storageService = storageService ?? SongStorageService(),
+       _youtubeService = youtubeService ?? YouTubeDownloadService(),
+       _songs = List<Song>.from(initialSongs ?? const []) {
     if (listenToDownloads) {
       _downloadManager.addListener(_handleDownloadManagerChanged);
     }
@@ -101,8 +101,9 @@ class MusicProvider extends ChangeNotifier {
       _queue
         ..clear()
         ..addAll(_queue.where(_songs.contains));
-      _queueIndex =
-          _queue.isEmpty ? 0 : _queueIndex.clamp(0, _queue.length - 1).toInt();
+      _queueIndex = _queue.isEmpty
+          ? 0
+          : _queueIndex.clamp(0, _queue.length - 1).toInt();
     } catch (e) {
       _setError('Error loading music: $e');
     } finally {
@@ -259,16 +260,18 @@ class MusicProvider extends ChangeNotifier {
       final wasCurrent = currentSong?.path == songToDelete.path;
       _songs.removeAt(index);
 
-      final removedQueueIndex =
-          _queue.indexWhere((song) => song.path == songToDelete.path);
+      final removedQueueIndex = _queue.indexWhere(
+        (song) => song.path == songToDelete.path,
+      );
       if (removedQueueIndex != -1) {
         _queue.removeAt(removedQueueIndex);
         if (_queueIndex >= removedQueueIndex && _queueIndex > 0) {
           _queueIndex--;
         }
       }
-      _queueIndex =
-          _queue.isEmpty ? 0 : _queueIndex.clamp(0, _queue.length - 1).toInt();
+      _queueIndex = _queue.isEmpty
+          ? 0
+          : _queueIndex.clamp(0, _queue.length - 1).toInt();
 
       await _storageService.removeSong(songToDelete.path);
       await _metadataService.deleteSongMetadata(songToDelete.path);
@@ -326,8 +329,9 @@ class MusicProvider extends ChangeNotifier {
     if (index == -1) return;
 
     _queue.removeAt(index);
-    _queueIndex =
-        _queue.isEmpty ? 0 : _queueIndex.clamp(0, _queue.length - 1).toInt();
+    _queueIndex = _queue.isEmpty
+        ? 0
+        : _queueIndex.clamp(0, _queue.length - 1).toInt();
 
     if (_queue.isEmpty) {
       await _audioServiceIntegration.updatePlaylist([]);
