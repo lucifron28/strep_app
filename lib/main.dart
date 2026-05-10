@@ -15,13 +15,19 @@ class StrepApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final downloadManager = DownloadManagerService();
+
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => DownloadManagerService()),
-        ChangeNotifierProvider(create: (context) => MusicProvider()),
+        ChangeNotifierProvider<DownloadManagerService>.value(
+          value: downloadManager,
+        ),
+        ChangeNotifierProvider(
+          create: (context) => MusicProvider(downloadManager: downloadManager),
+        ),
       ],
       child: MaterialApp(
-        title: 'Strep MP3 Player',
+        title: 'Strep',
         theme: DraculaTheme.theme,
         home: const AppInitializer(),
         debugShowCheckedModeBanner: false,
