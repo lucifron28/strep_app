@@ -22,16 +22,9 @@ class ImageService {
         DebugLogger.log('Android SDK version: $sdk');
         
         if (sdk >= 33) {
-          // Android 13+: Use READ_MEDIA_IMAGES permission
-          final status = await Permission.photos.status;
-          DebugLogger.log('Photos permission status (API 33+): $status');
-          
-          if (status.isDenied) {
-            final result = await Permission.photos.request();
-            DebugLogger.log('Photos permission request result: $result');
-            return result.isGranted;
-          }
-          return status.isGranted;
+          // Android Photo Picker grants access to the selected image without a
+          // broad READ_MEDIA_IMAGES runtime permission.
+          return true;
         } else {
           // Android 12 and below: Use READ_EXTERNAL_STORAGE
           final status = await Permission.storage.status;
