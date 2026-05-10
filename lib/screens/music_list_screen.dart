@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:just_audio/just_audio.dart';
+import '../models/song.dart';
 import '../providers/music_provider.dart';
 import '../services/download_manager_service.dart';
 import '../theme/dracula_theme.dart';
@@ -87,9 +88,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
               ),
               child: IconButton(
                 icon: const Icon(Icons.add_rounded, size: 28),
-                onPressed: () {
-                  context.read<MusicProvider>().importMusic();
-                },
+                onPressed: () => _importMusic(context),
                 tooltip: 'Import Music Files',
                 color: DraculaTheme.purple,
               ),
@@ -178,8 +177,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
           ],
         ),
       ),
-      body: Consumer<MusicProvider>(
-        builder: (context, musicProvider, child) {
+      body: Consumer2<MusicProvider, DownloadManagerService>(
+        builder: (context, musicProvider, downloadManager, child) {
           if (musicProvider.isLoading) {
             return const Center(
               child: Column(
@@ -225,7 +224,8 @@ class _MusicListScreenState extends State<MusicListScreen> {
             );
           }
 
-          if (musicProvider.songs.isEmpty) {
+          if (musicProvider.songs.isEmpty &&
+              downloadManager.visibleDownloads.isEmpty) {
             return Container(
               decoration: const BoxDecoration(
                 gradient: DraculaTheme.backgroundGradient,
@@ -274,7 +274,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Import MP3 files to start building your music library',
+                            'Import MP3, M4A, AAC, WAV, FLAC, OGG, or WEBM files to start building your music library',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,
@@ -456,7 +456,43 @@ class _MusicListScreenState extends State<MusicListScreen> {
     );
   }
 
-  void _showSongOptions(BuildContext context, song, MusicProvider musicProvider) {
+  Future<void> _importMusic(BuildContext context) async {
+    final musicProvider = context.read<MusicProvider>();
+    final importedCount = await musicProvider.importMusic();
+    if (!context.mounted) return;
+
+    if (importedCount > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Imported $importedCount song${importedCount == 1 ? '' : 's'}',
+            style: TextStyle(color: DraculaTheme.background),
+          ),
+          backgroundColor: DraculaTheme.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } else if (musicProvider.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            musicProvider.errorMessage!,
+            style: TextStyle(color: DraculaTheme.background),
+          ),
+          backgroundColor: DraculaTheme.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    }
+  }
+
+  void _showSongOptions(
+    BuildContext context,
+    Song song,
+    MusicProvider musicProvider,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -494,38 +530,53 @@ class _MusicListScreenState extends State<MusicListScreen> {
   }
 
   Widget _buildAllSongsTab(MusicProvider musicProvider) {
-    final activeDownloads = musicProvider.downloadManager.activeDownloads;
-    final totalItems = musicProvider.songs.length + activeDownloads.length;
-    
     return Column(
       children: [
         // Song count header
-        Container(
+        Consumer<DownloadManagerService>(
+          builder: (context, downloadManager, child) {
+            final activeDownloads = downloadManager.activeDownloads;
+            return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           child: Text(
-            '${musicProvider.songs.length} songs${activeDownloads.isNotEmpty ? ' • ${activeDownloads.length} downloading' : ''}',
+            '${musicProvider.songs.length} songs${activeDownloads.isNotEmpty ? ', ${activeDownloads.length} downloading' : ''}',
             style: TextStyle(
               color: DraculaTheme.comment,
               fontSize: 16,
             ),
           ),
+            );
+          },
         ),
         // Song list (including downloading items)
         Expanded(
           child: Consumer<DownloadManagerService>(
             builder: (context, downloadManager, child) {
+              final visibleDownloads = downloadManager.visibleDownloads;
+              final totalItems =
+                  musicProvider.songs.length + visibleDownloads.length;
+
+              if (totalItems == 0) {
+                return _buildEmptyTab(
+                  icon: Icons.music_note,
+                  title: 'No songs yet',
+                  message:
+                      'Import audio files or download permitted YouTube content.',
+                );
+              }
+
               return ListView.builder(
                 itemCount: totalItems,
                 itemBuilder: (context, index) {
                   // Show downloading items first
-                  if (index < activeDownloads.length) {
-                    final downloadItem = activeDownloads[index];
+                  if (index < visibleDownloads.length) {
+                    final downloadItem = visibleDownloads[index];
                     return _buildDownloadTile(downloadItem, musicProvider);
                   }
                   
                   // Then show regular songs
-                  final songIndex = index - activeDownloads.length;
+                  final songIndex = index - visibleDownloads.length;
                   final song = musicProvider.songs[songIndex];
                   return _buildSongTile(song, musicProvider);
                 },
@@ -537,8 +588,42 @@ class _MusicListScreenState extends State<MusicListScreen> {
     );
   }
 
+  Widget _buildEmptyTab({
+    required IconData icon,
+    required String title,
+    required String message,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: DraculaTheme.comment, size: 56),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: TextStyle(
+                color: DraculaTheme.foreground,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: TextStyle(color: DraculaTheme.comment),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAlbumsTab(MusicProvider musicProvider) {
-    final albumMap = <String, List<dynamic>>{};
+    final albumMap = <String, List<Song>>{};
     
     // Group songs by album
     for (final song in musicProvider.songs) {
@@ -550,6 +635,14 @@ class _MusicListScreenState extends State<MusicListScreen> {
     }
 
     final albums = albumMap.keys.toList()..sort();
+
+    if (albums.isEmpty) {
+      return _buildEmptyTab(
+        icon: Icons.album,
+        title: 'No albums yet',
+        message: 'Imported songs with album metadata will appear here.',
+      );
+    }
 
     return Column(
       children: [
@@ -600,7 +693,15 @@ class _MusicListScreenState extends State<MusicListScreen> {
                 ),
                 iconColor: DraculaTheme.purple,
                 collapsedIconColor: DraculaTheme.comment,
-                children: albumSongs.map((song) => _buildSongTile(song, musicProvider, padding: 32.0)).toList(),
+                children: albumSongs
+                    .map(
+                      (song) => _buildSongTile(
+                        song,
+                        musicProvider,
+                        padding: 32.0,
+                      ),
+                    )
+                    .toList(),
               );
             },
           ),
@@ -610,7 +711,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
   }
 
   Widget _buildArtistsTab(MusicProvider musicProvider) {
-    final artistMap = <String, List<dynamic>>{};
+    final artistMap = <String, List<Song>>{};
     
     // Group songs by artist
     for (final song in musicProvider.songs) {
@@ -622,6 +723,14 @@ class _MusicListScreenState extends State<MusicListScreen> {
     }
 
     final artists = artistMap.keys.toList()..sort();
+
+    if (artists.isEmpty) {
+      return _buildEmptyTab(
+        icon: Icons.person,
+        title: 'No artists yet',
+        message: 'Imported songs with artist metadata will appear here.',
+      );
+    }
 
     return Column(
       children: [
@@ -672,7 +781,15 @@ class _MusicListScreenState extends State<MusicListScreen> {
                 ),
                 iconColor: DraculaTheme.purple,
                 collapsedIconColor: DraculaTheme.comment,
-                children: artistSongs.map((song) => _buildSongTile(song, musicProvider, padding: 32.0)).toList(),
+                children: artistSongs
+                    .map(
+                      (song) => _buildSongTile(
+                        song,
+                        musicProvider,
+                        padding: 32.0,
+                      ),
+                    )
+                    .toList(),
               );
             },
           ),
@@ -681,7 +798,16 @@ class _MusicListScreenState extends State<MusicListScreen> {
     );
   }
 
-  Widget _buildDownloadTile(downloadItem, MusicProvider musicProvider, {double padding = 16.0}) {
+  Widget _buildDownloadTile(
+    DownloadItem downloadItem,
+    MusicProvider musicProvider, {
+    double padding = 16.0,
+  }) {
+    final canCancel = downloadItem.status == DownloadStatus.queued ||
+        downloadItem.status == DownloadStatus.downloading;
+    final canRetry = downloadItem.status == DownloadStatus.failed ||
+        downloadItem.status == DownloadStatus.cancelled;
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: padding, vertical: 6),
       decoration: BoxDecoration(
@@ -786,15 +912,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              downloadItem.status == DownloadStatus.downloading 
-                ? 'Downloading... ${(downloadItem.progress * 100).toInt()}%'
-                : downloadItem.status == DownloadStatus.queued
-                  ? 'Queued for download'
-                  : downloadItem.status == DownloadStatus.failed
-                    ? 'Download failed'
-                    : downloadItem.status == DownloadStatus.cancelled
-                      ? 'Download cancelled'
-                      : 'Unknown status',
+              _downloadStatusText(downloadItem),
               style: TextStyle(
                 color: DraculaTheme.cyan.withValues(alpha: 0.8),
                 fontSize: 12,
@@ -810,14 +928,20 @@ class _MusicListScreenState extends State<MusicListScreen> {
           ),
           child: IconButton(
             icon: Icon(
-              Icons.cancel,
-              color: DraculaTheme.red,
+              canRetry ? Icons.refresh : Icons.cancel,
+              color: canRetry ? DraculaTheme.orange : DraculaTheme.red,
               size: 20,
             ),
             onPressed: () {
-              musicProvider.downloadManager.cancelDownload(downloadItem.id);
+              if (canRetry) {
+                musicProvider.downloadManager.retryDownload(downloadItem.id);
+              } else if (canCancel) {
+                musicProvider.downloadManager.cancelDownload(downloadItem.id);
+              } else {
+                musicProvider.downloadManager.removeDownload(downloadItem.id);
+              }
             },
-            tooltip: 'Cancel Download',
+            tooltip: canRetry ? 'Retry Download' : 'Cancel Download',
           ),
         ),
         selected: false,
@@ -830,7 +954,7 @@ class _MusicListScreenState extends State<MusicListScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Download in progress: ${downloadItem.title}',
+                '${_downloadStatusText(downloadItem)}: ${downloadItem.title}',
                 style: TextStyle(color: DraculaTheme.background),
               ),
               backgroundColor: DraculaTheme.cyan,
@@ -845,7 +969,26 @@ class _MusicListScreenState extends State<MusicListScreen> {
     );
   }
 
-  Widget _buildSongTile(dynamic song, MusicProvider musicProvider, {double padding = 16.0}) {
+  String _downloadStatusText(DownloadItem item) {
+    switch (item.status) {
+      case DownloadStatus.downloading:
+        return 'Downloading ${(item.progress * 100).toInt()}%';
+      case DownloadStatus.queued:
+        return 'Queued for download';
+      case DownloadStatus.failed:
+        return item.errorMessage ?? 'Download failed';
+      case DownloadStatus.cancelled:
+        return 'Download cancelled';
+      case DownloadStatus.completed:
+        return 'Download completed';
+    }
+  }
+
+  Widget _buildSongTile(
+    Song song,
+    MusicProvider musicProvider, {
+    double padding = 16.0,
+  }) {
     final isCurrentSong = musicProvider.currentSong == song;
     
     return Container(
