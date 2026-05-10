@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+
 import '../models/song.dart';
 import '../services/audio_service_integration.dart';
 import '../services/download_manager_service.dart';
@@ -10,114 +13,96 @@ import '../services/song_storage_service.dart';
 import '../services/yt_service_explode.dart';
 
 class MusicProvider extends ChangeNotifier {
-  final AudioServiceIntegration _audioServiceIntegration = AudioServiceIntegration();
-  final DownloadManagerService _downloadManager = DownloadManagerService();
-  final MusicService _musicService = MusicService();
-  final SongMetadataService _metadataService = SongMetadataService();
-  final SongStorageService _storageService = SongStorageService();
-  final YouTubeDownloadService _youtubeService = YouTubeDownloadService();
+  MusicProvider({
+    AudioServiceIntegration? audioServiceIntegration,
+    DownloadManagerService? downloadManager,
+    MusicService? musicService,
+    SongMetadataService? metadataService,
+    SongStorageService? storageService,
+    YouTubeDownloadService? youtubeService,
+    List<Song>? initialSongs,
+    bool listenToDownloads = true,
+  })  : _audioServiceIntegration =
+            audioServiceIntegration ?? AudioServiceIntegration(),
+        _downloadManager = downloadManager ?? DownloadManagerService(),
+        _musicService = musicService ?? MusicService(),
+        _metadataService = metadataService ?? SongMetadataService(),
+        _storageService = storageService ?? SongStorageService(),
+        _youtubeService = youtubeService ?? YouTubeDownloadService(),
+        _songs = List<Song>.from(initialSongs ?? const []) {
+    if (listenToDownloads) {
+      _downloadManager.addListener(_handleDownloadManagerChanged);
+    }
+  }
 
-  List<Song> _songs = [];
+  final AudioServiceIntegration _audioServiceIntegration;
+  final DownloadManagerService _downloadManager;
+  final MusicService _musicService;
+  final SongMetadataService _metadataService;
+  final SongStorageService _storageService;
+  final YouTubeDownloadService _youtubeService;
+
+  List<Song> _songs;
   bool _isLoading = false;
   String? _errorMessage;
   StreamSubscription<PlayerState>? _playerStateSubscription;
-  StreamSubscription<Duration>? _positionSubscription;
   bool _disposed = false;
+  bool _processingCompletedDownloads = false;
+  final Set<String> _processedDownloadIds = <String>{};
 
-  List<Song> get songs => _songs;
+  List<Song> get songs => List.unmodifiable(_songs);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   DownloadManagerService get downloadManager => _downloadManager;
 
-  // Get audio service properties directly from the integration
   Song? get currentSong => _audioServiceIntegration.currentSong;
   int get currentIndex => _audioServiceIntegration.currentIndex;
   List<Song> get playlist => _audioServiceIntegration.playlist;
-  
-  // Player state from the audio service
-  PlayerState get playerState => _audioServiceIntegration.audioPlayer?.playerState ?? PlayerState(false, ProcessingState.idle);
-  Duration get currentPosition => _audioServiceIntegration.audioPlayer?.position ?? Duration.zero;
+
+  PlayerState get playerState =>
+      _audioServiceIntegration.audioPlayer?.playerState ??
+      PlayerState(false, ProcessingState.idle);
+  Duration get currentPosition =>
+      _audioServiceIntegration.audioPlayer?.position ?? Duration.zero;
   Duration? get totalDuration => _audioServiceIntegration.audioPlayer?.duration;
-  Stream<Duration> get positionStream => _audioServiceIntegration.audioPlayer?.positionStream ?? Stream.value(Duration.zero);
+  Stream<Duration> get positionStream =>
+      _audioServiceIntegration.audioPlayer?.positionStream ??
+      Stream.value(Duration.zero);
 
   final List<Song> _queue = [];
   int _queueIndex = 0;
-  
+
   List<Song> get queue => List.unmodifiable(_queue);
   int get queueIndex => _queueIndex;
-  // The song currently selected in the queue
   Song? get queuedSong => _queue.isNotEmpty ? _queue[_queueIndex] : null;
 
   Future<void> initialize() async {
-    // Initialize audio service integration for notifications and lock screen controls
     await _audioServiceIntegration.initialize();
-    
-    // Listen to download manager changes
-    _downloadManager.addListener(() {
-      if (!_disposed) {
-        // Check for completed downloads and add them to the library
-        for (final download in _downloadManager.completedDownloads) {
-          if (download.completedSong != null) {
-            final song = download.completedSong!;
-            if (!_songs.any((s) => s.path == song.path)) {
-              _songs.add(song);
-              _downloadManager.removeDownload(download.id);
-              notifyListeners();
-            }
-          }
-        }
-      }
-    });
-    
-    // Listen to player state changes and notify UI
+
     final audioPlayer = _audioServiceIntegration.audioPlayer;
     if (audioPlayer != null) {
       _playerStateSubscription = audioPlayer.playerStateStream.listen((_) {
         if (_disposed) return;
-
-        // Sync queue index with audio service
-        final current = currentSong;
-        final idx = _queue.indexWhere((s) => s.path == current?.path);
-        if (idx != -1 && idx != _queueIndex) {
-          _queueIndex = idx;
-        }
-        
-        // Update notification with current song whenever state changes
-        if (current != null) {
-          _audioServiceIntegration.updateCurrentSong(current);
-        }
-        
+        _syncQueueIndexWithCurrentSong();
         notifyListeners();
       });
     }
-    
+
     await loadMusic();
   }
 
   Future<void> loadMusic() async {
     _setLoading(true);
-    _clearError();
+    _clearError(notify: false);
 
     try {
-      final hasPermission = await _musicService.requestStoragePermission();
-      
-      if (!hasPermission) {
-        _setError('Storage permission is required to access music files');
-        return;
-      }
-
-      List<Song> songs = await _storageService.loadSongs();
-      
-      // Apply any saved metadata to the songs
-      final songsWithMetadata = await _metadataService.applyMetadataToSongs(songs);
-      _songs = songsWithMetadata;
-      
-      // Clear the queue to ensure it's in sync with the current song list
-      _queue.clear();
-      _queueIndex = 0;
-      
-      // Don't show error message if no songs - user can import manually
-      
+      final storedSongs = await _storageService.loadSongs();
+      _songs = await _metadataService.applyMetadataToSongs(storedSongs);
+      _queue
+        ..clear()
+        ..addAll(_queue.where(_songs.contains));
+      _queueIndex =
+          _queue.isEmpty ? 0 : _queueIndex.clamp(0, _queue.length - 1).toInt();
     } catch (e) {
       _setError('Error loading music: $e');
     } finally {
@@ -125,81 +110,72 @@ class MusicProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> importMusic() async {
+  Future<int> importMusic() async {
     try {
-      final hasPermission = await _musicService.requestStoragePermission();
-      
-      if (!hasPermission) {
-        _setError('Storage permission is required to access music files');
-        return;
+      final newSongs = await _musicService.importMusicFiles();
+
+      if (newSongs.isEmpty) {
+        _setError(
+          'No supported audio files were selected. Supported formats: ${MusicService.supportedExtensions.join(', ').toUpperCase()}.',
+        );
+        return 0;
       }
 
-      // Scan device for music files or let user pick files
-      final newSongs = await _musicService.importMusicFiles();
-      
-      if (newSongs.isNotEmpty) {
-        // Add new songs to storage (this handles duplicates)
-        await _storageService.addSongs(newSongs);
-        
-        // Reload the complete song list to include new songs
-        await loadMusic();
-        
-        // Show success message
-        _clearError();
-      } else {
-        // If no songs found, offer to scan device storage
-        final deviceSongs = await _musicService.loadMusicFiles();
-        if (deviceSongs.isNotEmpty) {
-          // Add found songs to storage
-          await _storageService.addSongs(deviceSongs);
-          
-          // Reload the complete song list
-          await loadMusic();
-          
-          _clearError();
-        } else {
-          _setError('No music files found. Try selecting files manually or check if music files exist on your device.');
-        }
+      final existingKeys = _songs.map((song) => song.path).toSet()
+        ..addAll(_songs.map((song) => song.id));
+      final songsToAdd = newSongs
+          .where(
+            (song) =>
+                !existingKeys.contains(song.path) &&
+                !existingKeys.contains(song.id),
+          )
+          .toList();
+
+      if (songsToAdd.isEmpty) {
+        _setError('Those songs are already in your library.');
+        return 0;
       }
+
+      await _storageService.addSongs(songsToAdd);
+      await loadMusic();
+      _clearError();
+      return songsToAdd.length;
     } catch (e) {
       _setError('Error importing music: $e');
+      return 0;
     }
   }
 
   Future<void> playSong(Song song) async {
     try {
-      // If song is not in queue, clear queue and add all songs starting from the selected one
-      final songIndex = _songs.indexWhere((s) => s.path == song.path);
-      if (songIndex != -1) {
-        // Create a new queue starting from the selected song
-        _queue.clear();
-        _queue.addAll(_songs.sublist(songIndex));
-        _queue.addAll(_songs.sublist(0, songIndex)); // Add songs before the selected one at the end
-        _queueIndex = 0; // Selected song is now at index 0
-        
-        // Use the unified audio service integration
-        await _audioServiceIntegration.updatePlaylist(_queue, initialIndex: _queueIndex);
-        
-        // Force sync the current song after play
-        await syncNotificationState();
-      }
-      
-      // notifyListeners() will be called by the stream listener
+      if (!await _ensureSongFileExists(song)) return;
+
+      final songIndex = _songs.indexWhere((item) => item.path == song.path);
+      final songsForQueue = songIndex == -1
+          ? <Song>[song]
+          : <Song>[
+              ..._songs.sublist(songIndex),
+              ..._songs.sublist(0, songIndex),
+            ];
+
+      _queue
+        ..clear()
+        ..addAll(songsForQueue);
+      _queueIndex = 0;
+
+      await _audioServiceIntegration.updatePlaylist(_queue, initialIndex: 0);
+      await _audioServiceIntegration.updateCurrentSong(song);
+      await _audioServiceIntegration.play();
+      notifyListeners();
     } catch (e) {
-      _setError('Error playing song: $e');
+      _setError('Could not play "${song.title}": $e');
     }
   }
 
   Future<void> playPause() async {
     try {
-      final audioPlayer = _audioServiceIntegration.audioPlayer;
-      if (audioPlayer != null) {
-        if (audioPlayer.playing) {
-          await audioPlayer.pause();
-        } else {
-          await audioPlayer.play();
-        }
-      }
+      await _audioServiceIntegration.playPause();
+      notifyListeners();
     } catch (e) {
       _setError('Error toggling play/pause: $e');
     }
@@ -207,12 +183,10 @@ class MusicProvider extends ChangeNotifier {
 
   Future<void> skipToNext() async {
     try {
-      final audioPlayer = _audioServiceIntegration.audioPlayer;
-      if (audioPlayer != null && audioPlayer.hasNext) {
-        await audioPlayer.seekToNext();
-        _queueIndex = (_queueIndex + 1) % _queue.length;
-        notifyListeners();
-      }
+      if (_queue.isEmpty) return;
+      await _audioServiceIntegration.skipToNext();
+      _syncQueueIndexWithCurrentSong();
+      notifyListeners();
     } catch (e) {
       _setError('Error skipping to next: $e');
     }
@@ -220,12 +194,10 @@ class MusicProvider extends ChangeNotifier {
 
   Future<void> skipToPrevious() async {
     try {
-      final audioPlayer = _audioServiceIntegration.audioPlayer;
-      if (audioPlayer != null && audioPlayer.hasPrevious) {
-        await audioPlayer.seekToPrevious();
-        _queueIndex = (_queueIndex - 1 + _queue.length) % _queue.length;
-        notifyListeners();
-      }
+      if (_queue.isEmpty) return;
+      await _audioServiceIntegration.skipToPrevious();
+      _syncQueueIndexWithCurrentSong();
+      notifyListeners();
     } catch (e) {
       _setError('Error skipping to previous: $e');
     }
@@ -233,39 +205,38 @@ class MusicProvider extends ChangeNotifier {
 
   Future<void> seek(Duration position) async {
     try {
-      final audioPlayer = _audioServiceIntegration.audioPlayer;
-      if (audioPlayer != null) {
-        await audioPlayer.seek(position);
-      }
+      await _audioServiceIntegration.seek(position);
     } catch (e) {
       _setError('Error seeking: $e');
     }
   }
 
   Future<void> syncNotificationState() async {
-    final currentSong = this.currentSong;
-    if (currentSong != null) {
-      await _audioServiceIntegration.updateCurrentSong(currentSong);
+    final song = currentSong;
+    if (song != null) {
+      await _audioServiceIntegration.updateCurrentSong(song);
     }
   }
 
   Future<void> updateSongDetails(Song oldSong, Song updatedSong) async {
     try {
-      // Find the song in the list and update it
       final index = _songs.indexWhere((song) => song.path == oldSong.path);
-      if (index != -1) {
-        _songs[index] = updatedSong;
-        
-        // Save the metadata for persistence
-        await _metadataService.saveSongDetails(updatedSong);
-        
-        // If this is the currently playing song, update it
-        if (currentSong?.path == oldSong.path) {
-          await _audioServiceIntegration.updateCurrentSong(updatedSong);
-        }
-        
-        notifyListeners();
+      if (index == -1) return;
+
+      _songs[index] = updatedSong;
+      await _storageService.saveSongs(_songs);
+      await _metadataService.saveSongDetails(updatedSong);
+
+      final queueIndex = _queue.indexWhere((song) => song.path == oldSong.path);
+      if (queueIndex != -1) {
+        _queue[queueIndex] = updatedSong;
       }
+
+      if (currentSong?.path == oldSong.path) {
+        await _audioServiceIntegration.updateCurrentSong(updatedSong);
+      }
+
+      notifyListeners();
     } catch (e) {
       _setError('Error updating song details: $e');
     }
@@ -274,19 +245,7 @@ class MusicProvider extends ChangeNotifier {
   Future<void> updateSongThumbnail(Song song, String thumbnailPath) async {
     try {
       final updatedSong = song.copyWith(customThumbnail: thumbnailPath);
-      
-      final index = _songs.indexWhere((s) => s.path == song.path);
-      if (index != -1) {
-        _songs[index] = updatedSong;
-        
-        await _metadataService.saveSongDetails(updatedSong);
-        
-        if (currentSong?.path == song.path) {
-          await _audioServiceIntegration.updateCurrentSong(updatedSong);
-        }
-        
-        notifyListeners();
-      }
+      await updateSongDetails(song, updatedSong);
     } catch (e) {
       _setError('Error updating song thumbnail: $e');
     }
@@ -294,60 +253,234 @@ class MusicProvider extends ChangeNotifier {
 
   Future<void> deleteSong(Song songToDelete) async {
     try {
-      // Find the song in the list
       final index = _songs.indexWhere((song) => song.path == songToDelete.path);
       if (index == -1) return;
 
-      // Check if the song to delete is currently playing
-      final isCurrentlyPlaying = currentSong?.path == songToDelete.path;
-      
-      // Remove from the songs list
+      final wasCurrent = currentSong?.path == songToDelete.path;
       _songs.removeAt(index);
-      
-      // Remove from the queue as well
-      final queueIndex = _queue.indexWhere((song) => song.path == songToDelete.path);
-      if (queueIndex != -1) {
-        _queue.removeAt(queueIndex);
-        // Adjust queue index if needed
-        if (_queueIndex >= queueIndex && _queueIndex > 0) {
+
+      final removedQueueIndex =
+          _queue.indexWhere((song) => song.path == songToDelete.path);
+      if (removedQueueIndex != -1) {
+        _queue.removeAt(removedQueueIndex);
+        if (_queueIndex >= removedQueueIndex && _queueIndex > 0) {
           _queueIndex--;
         }
-        _queueIndex = _queueIndex.clamp(0, _queue.length - 1);
       }
-      
-      // Remove from storage
+      _queueIndex =
+          _queue.isEmpty ? 0 : _queueIndex.clamp(0, _queue.length - 1).toInt();
+
       await _storageService.removeSong(songToDelete.path);
-      
-      // Remove from metadata service
       await _metadataService.deleteSongMetadata(songToDelete.path);
-      
-      // Handle audio service updates
-      if (isCurrentlyPlaying) {
-        // Stop the current playback
-        final audioPlayer = _audioServiceIntegration.audioPlayer;
-        if (audioPlayer != null) {
-          await audioPlayer.stop();
-        }
-        
-        // If there are still songs left in queue, update the playlist
-        if (_queue.isNotEmpty) {
-          await _audioServiceIntegration.updatePlaylist(_queue, initialIndex: _queueIndex);
-          // Play the next song - the handler will automatically start playing
-        } else {
-          // No songs left, clear the playlist
-          await _audioServiceIntegration.updatePlaylist([], initialIndex: 0);
-        }
-      } else if (_queue.isNotEmpty) {
-        // Just update the playlist without changing playback
-        await _audioServiceIntegration.updatePlaylist(_queue);
+
+      if (_queue.isEmpty) {
+        await _audioServiceIntegration.updatePlaylist([]);
       } else {
-        // Queue is empty, clear audio service playlist
-        await _audioServiceIntegration.updatePlaylist([], initialIndex: 0);
+        await _audioServiceIntegration.updatePlaylist(
+          _queue,
+          initialIndex: _queueIndex,
+        );
+        if (wasCurrent) {
+          await _audioServiceIntegration.play();
+        }
       }
-      
+
       notifyListeners();
     } catch (e) {
       _setError('Error deleting song: $e');
+    }
+  }
+
+  Future<void> setQueue(List<Song> songs, {int startIndex = 0}) async {
+    _queue
+      ..clear()
+      ..addAll(songs);
+
+    if (_queue.isEmpty) {
+      _queueIndex = 0;
+      await _audioServiceIntegration.updatePlaylist([]);
+      notifyListeners();
+      return;
+    }
+
+    _queueIndex = startIndex.clamp(0, _queue.length - 1).toInt();
+    await _audioServiceIntegration.updatePlaylist(
+      _queue,
+      initialIndex: _queueIndex,
+    );
+    notifyListeners();
+  }
+
+  Future<void> addToQueue(Song song) async {
+    _queue.add(song);
+    await _audioServiceIntegration.updatePlaylist(
+      _queue,
+      initialIndex: _queueIndex,
+    );
+    notifyListeners();
+  }
+
+  Future<void> removeFromQueue(Song song) async {
+    final wasCurrent = currentSong == song;
+    final index = _queue.indexWhere((item) => item.path == song.path);
+    if (index == -1) return;
+
+    _queue.removeAt(index);
+    _queueIndex =
+        _queue.isEmpty ? 0 : _queueIndex.clamp(0, _queue.length - 1).toInt();
+
+    if (_queue.isEmpty) {
+      await _audioServiceIntegration.updatePlaylist([]);
+    } else {
+      await _audioServiceIntegration.updatePlaylist(
+        _queue,
+        initialIndex: _queueIndex,
+      );
+      if (wasCurrent) {
+        await _audioServiceIntegration.play();
+      }
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> playNext() async {
+    if (_queueIndex < _queue.length - 1) {
+      await playSongAt(_queueIndex + 1);
+    }
+  }
+
+  Future<void> playPrevious() async {
+    if (_queueIndex > 0) {
+      await playSongAt(_queueIndex - 1);
+    }
+  }
+
+  Future<void> playSongAt(int index) async {
+    if (index < 0 || index >= _queue.length) return;
+
+    try {
+      final song = _queue[index];
+      if (!await _ensureSongFileExists(song)) return;
+
+      _queueIndex = index;
+      await _audioServiceIntegration.skipToQueueItem(index);
+      await _audioServiceIntegration.updateCurrentSong(song);
+      await _audioServiceIntegration.play();
+      notifyListeners();
+    } catch (e) {
+      _setError('Could not play queued song: $e');
+    }
+  }
+
+  Future<void> addYouTubeSong(Song song) async {
+    try {
+      await _addDownloadedSongToLibrary(song);
+    } catch (e) {
+      _setError('Failed to add YouTube song: $e');
+    }
+  }
+
+  Future<void> clearAllData() async {
+    try {
+      _songs.clear();
+      _queue.clear();
+      _queueIndex = 0;
+
+      await _audioServiceIntegration.updatePlaylist([]);
+      await _storageService.clearSongs();
+      await _metadataService.clearAllMetadata();
+
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to clear all data: $e');
+    }
+  }
+
+  Future<bool> _addDownloadedSongToLibrary(
+    Song song, {
+    bool notify = true,
+  }) async {
+    final existsInMemory = _songs.any(
+      (existing) => existing.path == song.path || existing.id == song.id,
+    );
+
+    if (existsInMemory) return false;
+
+    _songs.add(song);
+    final addedToStorage = await _storageService.addSong(song);
+    if (!addedToStorage) {
+      _songs.removeWhere(
+        (existing) => existing.path == song.path || existing.id == song.id,
+      );
+      return false;
+    }
+
+    if (notify) notifyListeners();
+    return true;
+  }
+
+  void _handleDownloadManagerChanged() {
+    if (_disposed || _processingCompletedDownloads) return;
+
+    final completed = _downloadManager.completedDownloads
+        .where((download) => !_processedDownloadIds.contains(download.id))
+        .toList();
+    if (completed.isEmpty) return;
+
+    _processingCompletedDownloads = true;
+    unawaited(_persistCompletedDownloads(completed));
+  }
+
+  Future<void> _persistCompletedDownloads(List<DownloadItem> downloads) async {
+    try {
+      for (final download in downloads) {
+        if (_disposed) return;
+
+        _processedDownloadIds.add(download.id);
+        final song = download.completedSong;
+        if (song != null) {
+          await _addDownloadedSongToLibrary(song, notify: false);
+        }
+      }
+
+      for (final download in downloads) {
+        _downloadManager.removeDownload(download.id);
+      }
+
+      notifyListeners();
+    } finally {
+      _processingCompletedDownloads = false;
+      if (!_disposed) {
+        _handleDownloadManagerChanged();
+      }
+    }
+  }
+
+  Future<bool> _ensureSongFileExists(Song song) async {
+    final path = song.path;
+    if (path.startsWith('http://') ||
+        path.startsWith('https://') ||
+        path.startsWith('content://')) {
+      return true;
+    }
+
+    final exists = await File(path).exists();
+    if (exists) return true;
+
+    _setError(
+      'The audio file for "${song.title}" could not be found. It may have been moved or deleted.',
+    );
+    return false;
+  }
+
+  void _syncQueueIndexWithCurrentSong() {
+    final song = currentSong;
+    if (song == null) return;
+
+    final index = _queue.indexWhere((item) => item.path == song.path);
+    if (index != -1) {
+      _queueIndex = index;
     }
   }
 
@@ -361,9 +494,9 @@ class MusicProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _clearError() {
+  void _clearError({bool notify = true}) {
     _errorMessage = null;
-    notifyListeners();
+    if (notify) notifyListeners();
   }
 
   void clearError() {
@@ -377,109 +510,11 @@ class MusicProvider extends ChangeNotifier {
     }
   }
 
-  void setQueue(List<Song> songs, {int startIndex = 0}) async {
-    _queue
-      ..clear()
-      ..addAll(songs);
-    _queueIndex = startIndex.clamp(0, _queue.length - 1);
-    notifyListeners();
-
-    // Update the audio service playlist and play the selected song
-    // Ensures the queue is in sync with the Audio Service
-    await _audioServiceIntegration.updatePlaylist(songs, initialIndex: startIndex);
-    notifyListeners();
-  }
-
-  void addToQueue(Song song) {
-    _queue.add(song);
-    // Ensures the queue is in sync with the Audio Service
-    _audioServiceIntegration.updatePlaylist(_queue);
-    notifyListeners();
-  }
-
-  void removeFromQueue(Song song) {
-    final wasCurrent = currentSong == song;
-    _queue.remove(song);
-    if (wasCurrent && _queue.isNotEmpty) {
-      _queueIndex = _queueIndex.clamp(0, _queue.length - 1);
-    }
-    // Ensures the queue is in sync with the Audio Service
-    _audioServiceIntegration.updatePlaylist(_queue);
-    notifyListeners();
-  }
-
-  void playNext() {
-    if (_queueIndex < _queue.length - 1) {
-      _queueIndex++;
-    }
-    // Ensures the queue is in sync with the Audio Service
-    _audioServiceIntegration.updatePlaylist(_queue);
-    notifyListeners();
-  }
-
-  void playPrevious() {
-    if (_queueIndex > 0) {
-      _queueIndex--;
-    }
-    // Ensures the queue is in sync with the Audio Service
-    _audioServiceIntegration.updatePlaylist(_queue);
-    notifyListeners();
-  }
-
-  void playSongAt(int index) {
-    if (index >= 0 && index < _queue.length) {
-      _queueIndex = index;
-    // Ensures the queue is in sync with the Audio Service
-    _audioServiceIntegration.updatePlaylist(_queue);
-      notifyListeners();
-    }
-  }
-
-  /// Add a downloaded YouTube song to the library
-  Future<void> addYouTubeSong(Song song) async {
-    try {
-      // Add to songs list
-      if (!_songs.any((s) => s.path == song.path)) {
-        _songs.add(song);
-        
-        // Save to storage
-        await _storageService.saveSongs(_songs);
-        
-        notifyListeners();
-      }
-    } catch (e) {
-      _setError('Failed to add YouTube song: $e');
-    }
-  }
-
-  /// Clear all data (songs, metadata, playback state)
-  Future<void> clearAllData() async {
-    try {
-      // Clear songs list and queue
-      _songs.clear();
-      _queue.clear();
-      _queueIndex = 0;
-      
-      // Clear audio service
-      await _audioServiceIntegration.updatePlaylist([]);
-      
-      // Clear storage
-      await _storageService.clearSongs();
-      
-      // Clear metadata
-      await _metadataService.clearAllMetadata();
-      
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to clear all data: $e');
-    }
-  }
-
   @override
   void dispose() {
     _disposed = true;
+    _downloadManager.removeListener(_handleDownloadManagerChanged);
     _playerStateSubscription?.cancel();
-    _positionSubscription?.cancel();
     _youtubeService.dispose();
     super.dispose();
   }
