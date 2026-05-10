@@ -9,11 +9,7 @@ class QueueModal extends StatelessWidget {
   final List<Song> queue;
   final Song? currentSong;
 
-  const QueueModal({
-    super.key,
-    required this.queue,
-    this.currentSong,
-  });
+  const QueueModal({super.key, required this.queue, this.currentSong});
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +58,13 @@ class QueueModal extends StatelessWidget {
                           final song = queue[index];
                           final isCurrent = song == currentSong;
                           return ListTile(
-                            leading: SongThumbnail(song: song, size: 40, borderRadius:BorderRadius.all(Radius.circular(8 ))),
+                            leading: SongThumbnail(
+                              song: song,
+                              size: 40,
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(8),
+                              ),
+                            ),
                             title: Text(
                               song.title,
                               style: TextStyle(
@@ -77,27 +79,31 @@ class QueueModal extends StatelessWidget {
                             ),
                             subtitle: Text(
                               song.artist,
-                              style: TextStyle(
-                                color: DraculaTheme.comment,
-                              ),
+                              style: TextStyle(color: DraculaTheme.comment),
                               overflow: TextOverflow.ellipsis,
                             ),
                             selected: isCurrent,
-                            selectedTileColor:
-                                DraculaTheme.purple.withValues(alpha: 0.08),
+                            selectedTileColor: DraculaTheme.purple.withValues(
+                              alpha: 0.08,
+                            ),
                             onTap: () {
-                              Provider.of<MusicProvider>(context, listen: false)
-                                  .playSongAt(index);
+                              Provider.of<MusicProvider>(
+                                context,
+                                listen: false,
+                              ).playSongAt(index);
                               Navigator.pop(context);
                             },
                             trailing: IconButton(
-                              icon: Icon(Icons.close,
-                                  color: DraculaTheme.red.withValues(alpha: 0.7)),
+                              icon: Icon(
+                                Icons.close,
+                                color: DraculaTheme.red.withValues(alpha: 0.7),
+                              ),
                               tooltip: "Remove from queue",
                               onPressed: () {
-                                Provider.of<MusicProvider>(context,
-                                        listen: false)
-                                    .removeFromQueue(song);
+                                Provider.of<MusicProvider>(
+                                  context,
+                                  listen: false,
+                                ).removeFromQueue(song);
                               },
                             ),
                           );
