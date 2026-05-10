@@ -25,8 +25,8 @@ class Song {
     this.youtubeVideoId,
     this.originalUrl,
     DateTime? dateAdded,
-  })  : id = id ?? _deriveId(path, source, youtubeVideoId),
-        dateAdded = dateAdded ?? DateTime.now();
+  }) : id = id ?? _deriveId(path, source, youtubeVideoId),
+       dateAdded = dateAdded ?? DateTime.now();
 
   factory Song.fromPath(String path) {
     final filename = path.split(RegExp(r'[\\/]')).last;
