@@ -6,7 +6,7 @@ class VinylDisk extends StatefulWidget {
   final bool isSpinning;
   final Color? primaryColor;
   final Color? accentColor;
-  
+
   const VinylDisk({
     super.key,
     this.size = 56,
@@ -30,7 +30,7 @@ class _VinylDiskState extends State<VinylDisk>
       duration: const Duration(seconds: 3),
       vsync: this,
     );
-    
+
     if (widget.isSpinning) {
       _rotationController.repeat();
     }
@@ -58,7 +58,7 @@ class _VinylDiskState extends State<VinylDisk>
   Widget build(BuildContext context) {
     final primaryColor = widget.primaryColor ?? DraculaTheme.currentLine;
     final accentColor = widget.accentColor ?? DraculaTheme.purple;
-    
+
     return AnimatedBuilder(
       animation: _rotationController,
       builder: (context, child) {
@@ -80,11 +80,8 @@ class _VinylDiskState extends State<VinylDisk>
 class VinylDiskPainter extends CustomPainter {
   final Color primaryColor;
   final Color accentColor;
-  
-  VinylDiskPainter({
-    required this.primaryColor,
-    required this.accentColor,
-  });
+
+  VinylDiskPainter({required this.primaryColor, required this.accentColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -100,12 +97,12 @@ class VinylDiskPainter extends CustomPainter {
       ],
       stops: const [0.0, 0.7, 1.0],
     );
-    
+
     final outerPaint = Paint()
       ..shader = outerGradient.createShader(
         Rect.fromCircle(center: center, radius: radius),
       );
-    
+
     canvas.drawCircle(center, radius, outerPaint);
 
     // Vinyl grooves (concentric circles)
@@ -113,7 +110,7 @@ class VinylDiskPainter extends CustomPainter {
       ..color = DraculaTheme.background.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
-    
+
     for (int i = 1; i <= 8; i++) {
       final grooveRadius = radius * (0.3 + (i * 0.08));
       canvas.drawCircle(center, grooveRadius, groovePaint);
@@ -129,24 +126,23 @@ class VinylDiskPainter extends CustomPainter {
       ],
       stops: const [0.0, 0.6, 1.0],
     );
-    
+
     final labelPaint = Paint()
       ..shader = labelGradient.createShader(
         Rect.fromCircle(center: center, radius: labelRadius),
       );
-    
+
     canvas.drawCircle(center, labelRadius, labelPaint);
 
     // Center hole with dark shadow
     final centerHoleRadius = radius * 0.08;
     final shadowPaint = Paint()
       ..color = DraculaTheme.background.withValues(alpha: 0.9);
-    
+
     canvas.drawCircle(center, centerHoleRadius + 2, shadowPaint);
-    
-    final holePaint = Paint()
-      ..color = DraculaTheme.background;
-    
+
+    final holePaint = Paint()..color = DraculaTheme.background;
+
     canvas.drawCircle(center, centerHoleRadius, holePaint);
 
     // Highlight reflection
@@ -154,11 +150,11 @@ class VinylDiskPainter extends CustomPainter {
       ..color = DraculaTheme.foreground.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
-    
+
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius * 0.8),
       -0.5, // Start angle
-      1.0,  // Sweep angle
+      1.0, // Sweep angle
       false,
       highlightPaint,
     );
