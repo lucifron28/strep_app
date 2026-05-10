@@ -4,21 +4,14 @@ import '../models/song.dart';
 
 class SongStorageService {
   static const String _songsKey = 'imported_songs';
-  
+
   static final SongStorageService _instance = SongStorageService._internal();
   factory SongStorageService() => _instance;
   SongStorageService._internal();
 
   Future<void> saveSongs(List<Song> songs) async {
     final prefs = await SharedPreferences.getInstance();
-    final List<Map<String, String>> songMaps = songs.map((song) => {
-      'title': song.title,
-      'artist': song.artist,
-      'album': song.album,
-      'path': song.path,
-      if (song.customThumbnail != null) 'customThumbnail': song.customThumbnail!,
-    }).toList();
-    
+    final songMaps = songs.map((song) => song.toJson()).toList();
     final jsonString = jsonEncode(songMaps);
     await prefs.setString(_songsKey, jsonString);
   }
@@ -26,21 +19,18 @@ class SongStorageService {
   Future<List<Song>> loadSongs() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_songsKey);
-    
+
     if (jsonString == null) return [];
-    
+
     try {
-      final List<dynamic> songMaps = jsonDecode(jsonString);
-      return songMaps.map((songMap) {
-        final Map<String, dynamic> map = Map<String, dynamic>.from(songMap);
-        return Song(
-          title: map['title'] ?? 'Unknown Title',
-          artist: map['artist'] ?? 'Unknown Artist',
-          album: map['album'] ?? 'Unknown Album',
-          path: map['path'] ?? '',
-          customThumbnail: map['customThumbnail'],
-        );
-      }).toList();
+      final decoded = jsonDecode(jsonString);
+      if (decoded is! List) return [];
+
+      return decoded
+          .whereType<Map>()
+          .map((songMap) => Song.fromJson(Map<String, dynamic>.from(songMap)))
+          .where((song) => song.path.isNotEmpty)
+          .toList();
     } catch (e) {
       return [];
     }
@@ -60,13 +50,33 @@ class SongStorageService {
   Future<void> addSongs(List<Song> newSongs) async {
     final existingSongs = await loadSongs();
     final existingPaths = existingSongs.map((s) => s.path).toSet();
-    
-    final songsToAdd = newSongs.where((song) => !existingPaths.contains(song.path)).toList();
-    
+    final existingIds = existingSongs.map((s) => s.id).toSet();
+
+    final songsToAdd = newSongs
+        .where(
+          (song) =>
+              !existingPaths.contains(song.path) &&
+              !existingIds.contains(song.id),
+        )
+        .toList();
+
     if (songsToAdd.isNotEmpty) {
       existingSongs.addAll(songsToAdd);
       await saveSongs(existingSongs);
     }
+  }
+
+  Future<bool> addSong(Song song) async {
+    final existingSongs = await loadSongs();
+    final exists = existingSongs.any(
+      (existing) => existing.path == song.path || existing.id == song.id,
+    );
+
+    if (exists) return false;
+
+    existingSongs.add(song);
+    await saveSongs(existingSongs);
+    return true;
   }
 
   Future<void> clearSongs() async {
