@@ -24,13 +24,8 @@ class SongOptionsBottomSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: DraculaTheme.background,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(20),
-        ),
-        border: Border.all(
-          color: DraculaTheme.selection,
-          width: 1,
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        border: Border.all(color: DraculaTheme.selection, width: 1),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -45,7 +40,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          
+
           // Header
           Padding(
             padding: const EdgeInsets.all(20),
@@ -87,7 +82,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Options
           Column(
             children: [
@@ -129,7 +124,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
               ),
             ],
           ),
-          
+
           // Bottom padding
           const SizedBox(height: 20),
         ],
@@ -174,16 +169,15 @@ class SongOptionsBottomSheet extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isDestructive ? DraculaTheme.red : DraculaTheme.foreground,
+                      color: isDestructive
+                          ? DraculaTheme.red
+                          : DraculaTheme.foreground,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: DraculaTheme.comment,
-                    ),
+                    style: TextStyle(fontSize: 14, color: DraculaTheme.comment),
                   ),
                 ],
               ),
@@ -201,26 +195,21 @@ class SongOptionsBottomSheet extends StatelessWidget {
 
   void _showEditDialog(BuildContext context) {
     Navigator.of(context).pop(); // Close bottom sheet first
-    
+
     showDialog(
       context: context,
-      builder: (context) => EditSongDialog(
-        song: song,
-        onSave: onEditSong,
-      ),
+      builder: (context) => EditSongDialog(song: song, onSave: onEditSong),
     );
   }
 
   void _showSongInfo(BuildContext context) {
     Navigator.of(context).pop(); // Close bottom sheet first
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: DraculaTheme.background,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Song Information',
           style: TextStyle(color: DraculaTheme.foreground),
@@ -238,10 +227,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Close',
-              style: TextStyle(color: DraculaTheme.purple),
-            ),
+            child: Text('Close', style: TextStyle(color: DraculaTheme.purple)),
           ),
         ],
       ),
@@ -265,10 +251,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 14,
-              color: DraculaTheme.foreground,
-            ),
+            style: TextStyle(fontSize: 14, color: DraculaTheme.foreground),
             maxLines: isPath ? 3 : 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -279,7 +262,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
 
   void _shareSong(BuildContext context) {
     Navigator.of(context).pop(); // Close bottom sheet first
-    
+
     // Show a simple message since we don't have sharing implemented
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -289,16 +272,14 @@ class SongOptionsBottomSheet extends StatelessWidget {
         ),
         backgroundColor: DraculaTheme.orange,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
 
   void _showDeleteConfirmation(BuildContext context) {
     Navigator.of(context).pop(); // Close bottom sheet first
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -309,11 +290,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
         ),
         title: Row(
           children: [
-            Icon(
-              Icons.warning_outlined,
-              color: DraculaTheme.red,
-              size: 24,
-            ),
+            Icon(Icons.warning_outlined, color: DraculaTheme.red, size: 24),
             const SizedBox(width: 12),
             Text(
               'Remove Song',
@@ -330,10 +307,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
           children: [
             Text(
               'Are you sure you want to remove this song from your library?',
-              style: TextStyle(
-                color: DraculaTheme.foreground,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: DraculaTheme.foreground, fontSize: 16),
             ),
             const SizedBox(height: 12),
             Container(
@@ -344,11 +318,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.music_note,
-                    color: DraculaTheme.purple,
-                    size: 20,
-                  ),
+                  Icon(Icons.music_note, color: DraculaTheme.purple, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -381,10 +351,7 @@ class SongOptionsBottomSheet extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'This will only remove the song from your app library. The audio file will remain on your device.',
-              style: TextStyle(
-                color: DraculaTheme.comment,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: DraculaTheme.comment, fontSize: 14),
             ),
           ],
         ),
@@ -422,17 +389,19 @@ class SongOptionsBottomSheet extends StatelessWidget {
 
   void _changeThumbnail(BuildContext context) async {
     Navigator.of(context).pop(); // Close bottom sheet first
-    
+
     try {
       final ImageService imageService = ImageService();
-      final String? thumbnailPath = await imageService.pickImageForThumbnail(song.path);
-      
+      final String? thumbnailPath = await imageService.pickImageForThumbnail(
+        song.path,
+      );
+
       if (thumbnailPath != null) {
         // Call callback to update song with new thumbnail
         if (onChangeThumbnail != null) {
           onChangeThumbnail!(song, thumbnailPath);
         }
-        
+
         // Show success message
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
