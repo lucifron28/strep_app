@@ -4,7 +4,7 @@ class StrepIcon extends StatelessWidget {
   final double size;
   final BorderRadius? borderRadius;
   final BoxFit fit;
-  
+
   const StrepIcon({
     super.key,
     this.size = 24,
@@ -22,10 +22,7 @@ class StrepIcon extends StatelessWidget {
     );
 
     if (borderRadius != null) {
-      iconWidget = ClipRRect(
-        borderRadius: borderRadius!,
-        child: iconWidget,
-      );
+      iconWidget = ClipRRect(borderRadius: borderRadius!, child: iconWidget);
     }
 
     return iconWidget;
