@@ -56,10 +56,10 @@ class _AppInitializerState extends State<AppInitializer> {
     // Get the music provider and initialize
     final musicProvider = Provider.of<MusicProvider>(context, listen: false);
     await musicProvider.initialize();
-    
+
     // Add a small delay for better UX
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (mounted) {
       setState(() {
         _initialized = true;
@@ -72,7 +72,7 @@ class _AppInitializerState extends State<AppInitializer> {
     if (!_initialized) {
       return const SplashScreen();
     }
-    
+
     return const MusicListScreen();
   }
 }
