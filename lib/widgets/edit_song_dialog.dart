@@ -6,11 +6,7 @@ class EditSongDialog extends StatefulWidget {
   final Song song;
   final Function(Song) onSave;
 
-  const EditSongDialog({
-    super.key,
-    required this.song,
-    required this.onSave,
-  });
+  const EditSongDialog({super.key, required this.song, required this.onSave});
 
   @override
   State<EditSongDialog> createState() => _EditSongDialogState();
@@ -42,18 +38,13 @@ class _EditSongDialogState extends State<EditSongDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: DraculaTheme.background,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: DraculaTheme.background,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: DraculaTheme.selection,
-            width: 1,
-          ),
+          border: Border.all(color: DraculaTheme.selection, width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -62,11 +53,7 @@ class _EditSongDialogState extends State<EditSongDialog> {
             // Title
             Row(
               children: [
-                Icon(
-                  Icons.edit,
-                  color: DraculaTheme.purple,
-                  size: 24,
-                ),
+                Icon(Icons.edit, color: DraculaTheme.purple, size: 24),
                 const SizedBox(width: 12),
                 Text(
                   'Edit Song Details',
@@ -78,9 +65,9 @@ class _EditSongDialogState extends State<EditSongDialog> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Form
             Form(
               key: _formKey,
@@ -98,9 +85,9 @@ class _EditSongDialogState extends State<EditSongDialog> {
                       return null;
                     },
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Artist
                   _buildTextField(
                     controller: _artistController,
@@ -113,9 +100,9 @@ class _EditSongDialogState extends State<EditSongDialog> {
                       return null;
                     },
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Album
                   _buildTextField(
                     controller: _albumController,
@@ -131,9 +118,9 @@ class _EditSongDialogState extends State<EditSongDialog> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -145,9 +132,9 @@ class _EditSongDialogState extends State<EditSongDialog> {
                   ),
                   child: const Text('Cancel'),
                 ),
-                
+
                 const SizedBox(width: 12),
-                
+
                 ElevatedButton(
                   onPressed: _saveChanges,
                   style: ElevatedButton.styleFrom(
@@ -217,13 +204,13 @@ class _EditSongDialogState extends State<EditSongDialog> {
         artist: _artistController.text.trim(),
         album: _albumController.text.trim(),
       );
-      
+
       // Call the onSave callback
       widget.onSave(updatedSong);
-      
+
       // Close the dialog
       Navigator.of(context).pop();
-      
+
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -233,9 +220,7 @@ class _EditSongDialogState extends State<EditSongDialog> {
           ),
           backgroundColor: DraculaTheme.green,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     }
