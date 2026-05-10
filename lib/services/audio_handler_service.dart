@@ -2,10 +2,11 @@ import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/song.dart';
 
-class StrepAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+class StrepAudioHandler extends BaseAudioHandler
+    with QueueHandler, SeekHandler {
   // Create our own AudioPlayer instance that we fully control
   final AudioPlayer _player = AudioPlayer();
-  
+
   List<Song> _playlist = [];
   int _currentIndex = 0;
   Song? _currentSong;
@@ -22,25 +23,30 @@ class StrepAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
 
     // Listen to position changes
     _player.positionStream.listen((position) {
-      playbackState.add(playbackState.value.copyWith(
-        updatePosition: position,
-      ));
+      playbackState.add(playbackState.value.copyWith(updatePosition: position));
     });
 
     // Listen to duration changes
     _player.durationStream.listen((duration) {
-      playbackState.add(playbackState.value.copyWith(
-        bufferedPosition: duration ?? Duration.zero,
-      ));
+      playbackState.add(
+        playbackState.value.copyWith(
+          bufferedPosition: duration ?? Duration.zero,
+        ),
+      );
     });
 
     // Listen to sequence state changes for current song updates
     _player.sequenceStateStream.listen((sequenceState) {
-      final newIndex = sequenceState.currentIndex ?? 0;
-      if (newIndex != _currentIndex && newIndex < _playlist.length) {
+      final newIndex = sequenceState.currentIndex;
+      if (newIndex == null || _playlist.isEmpty) {
+        return;
+      }
+
+      if (newIndex < _playlist.length) {
         _currentIndex = newIndex;
-        _currentSong = _playlist[_currentIndex];
+        _currentSong = _playlist[newIndex];
         _updateCurrentMediaItem();
+        _updatePlaybackState();
       }
     });
   }
@@ -48,28 +54,36 @@ class StrepAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
   void _updatePlaybackState() {
     final state = _player.playerState;
     final isPlaying = state.playing;
-    final isLoading = state.processingState == ProcessingState.loading ||
-                     state.processingState == ProcessingState.buffering;
+    final isLoading =
+        state.processingState == ProcessingState.loading ||
+        state.processingState == ProcessingState.buffering;
     final isStopped = state.processingState == ProcessingState.idle;
-    
-    playbackState.add(playbackState.value.copyWith(
-      playing: isPlaying,
-      processingState: isStopped 
-        ? AudioProcessingState.idle
-        : isLoading 
-          ? AudioProcessingState.loading 
-          : AudioProcessingState.ready,
-      controls: [
-        MediaControl.skipToPrevious,
-        isPlaying ? MediaControl.pause : MediaControl.play,
-        MediaControl.skipToNext,
-      ],
-      systemActions: const {
-        MediaAction.seek,
-        MediaAction.seekForward,
-        MediaAction.seekBackward,
-      },
-    ));
+
+    playbackState.add(
+      playbackState.value.copyWith(
+        playing: isPlaying,
+        processingState: isStopped
+            ? AudioProcessingState.idle
+            : isLoading
+            ? AudioProcessingState.loading
+            : AudioProcessingState.ready,
+        controls: [
+          MediaControl.skipToPrevious,
+          isPlaying ? MediaControl.pause : MediaControl.play,
+          MediaControl.stop,
+          MediaControl.skipToNext,
+        ],
+        systemActions: const {
+          MediaAction.seek,
+          MediaAction.seekForward,
+          MediaAction.seekBackward,
+        },
+        androidCompactActionIndices: const [0, 1, 3],
+        updatePosition: _player.position,
+        bufferedPosition: _player.bufferedPosition,
+        queueIndex: _currentIndex,
+      ),
+    );
   }
 
   void _updateCurrentMediaItem() {
@@ -85,7 +99,7 @@ class StrepAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
     }
   }
 
-    @override
+  @override
   Future<void> play() async {
     await _player.play();
   }
@@ -98,6 +112,7 @@ class StrepAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
   @override
   Future<void> stop() async {
     await _player.stop();
+    _updatePlaybackState();
   }
 
   @override
@@ -126,6 +141,7 @@ class StrepAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
       _currentIndex = index;
       _currentSong = _playlist[index];
       _updateCurrentMediaItem();
+      _updatePlaybackState();
     }
   }
 
@@ -146,60 +162,77 @@ class StrepAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
       duration: duration,
       artUri: artUri,
       playable: true,
-      extras: {
-        'source': 'local',
-      },
+      extras: {'source': 'local'},
     );
   }
 
   // Set the audio sources from songs
-  Future<void> setAudioSourceFromSongs(List<Song> songs, {int initialIndex = 0}) async {
-    if (songs.isEmpty) return;
-
-    _playlist = songs;
-    _currentIndex = initialIndex;
-    if (initialIndex < songs.length) {
-      _currentSong = songs[initialIndex];
+  Future<void> setAudioSourceFromSongs(
+    List<Song> songs, {
+    int initialIndex = 0,
+  }) async {
+    if (songs.isEmpty) {
+      await clearPlaylist();
+      return;
     }
 
+    _playlist = songs;
+    _currentIndex = initialIndex.clamp(0, songs.length - 1).toInt();
+    _currentSong = songs[_currentIndex];
+
     // Convert songs to MediaItems for the queue
-    final mediaItems = songs.map((song) => createMediaItem(
-      id: song.path,
-      title: song.title,
-      artist: song.artist,
-      album: song.album,
-      duration: song.duration,
-    )).toList();
+    final mediaItems = songs
+        .map(
+          (song) => createMediaItem(
+            id: song.path,
+            title: song.title,
+            artist: song.artist,
+            album: song.album,
+            duration: song.duration,
+          ),
+        )
+        .toList();
 
     // Set the queue
     queue.add(mediaItems);
 
     // Set current media item
-    if (initialIndex < mediaItems.length) {
-      mediaItem.add(mediaItems[initialIndex]);
-    }
+    mediaItem.add(mediaItems[_currentIndex]);
 
     // Set audio sources for just_audio
     final audioSources = songs.map((song) {
-      final uri = song.path.startsWith('file://') ? Uri.parse(song.path) : Uri.file(song.path);
+      final uri = song.path.startsWith('file://')
+          ? Uri.parse(song.path)
+          : Uri.file(song.path);
       return AudioSource.uri(uri);
     }).toList();
 
-    await _player.setAudioSources(audioSources, initialIndex: initialIndex);
+    await _player.setAudioSources(
+      audioSources,
+      initialIndex: _currentIndex,
+      initialPosition: Duration.zero,
+    );
+    _updatePlaybackState();
   }
 
   // Legacy method for MediaItems (still used by integration layer)
-  Future<void> setAudioSource(List<MediaItem> items, {int initialIndex = 0}) async {
-    if (items.isEmpty) return;
-    
+  Future<void> setAudioSource(
+    List<MediaItem> items, {
+    int initialIndex = 0,
+  }) async {
+    if (items.isEmpty) {
+      await clearPlaylist();
+      return;
+    }
+
     // Clear and set the queue
     queue.add(items);
-    
+
     // Set current media item
     if (initialIndex < items.length) {
       mediaItem.add(items[initialIndex]);
     }
-    
+
     // Update playback state to ensure notification shows correct controls
     _updatePlaybackState();
   }
@@ -208,6 +241,42 @@ class StrepAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
   @override
   Future<void> updateMediaItem(MediaItem mediaItem) async {
     this.mediaItem.add(mediaItem);
+  }
+
+  Future<void> replaceCurrentSong(Song song) async {
+    final index = _playlist.indexWhere((item) => item.path == song.path);
+    if (index == -1) return;
+
+    _playlist[index] = song;
+    if (_currentSong?.path == song.path) {
+      _currentSong = song;
+      _updateCurrentMediaItem();
+    }
+
+    queue.add(
+      _playlist
+          .map(
+            (item) => createMediaItem(
+              id: item.path,
+              title: item.title,
+              artist: item.artist,
+              album: item.album,
+              duration: item.duration,
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Future<void> clearPlaylist() async {
+    _playlist = [];
+    _currentIndex = 0;
+    _currentSong = null;
+    queue.add(const []);
+    mediaItem.add(null);
+    await _player.stop();
+    await _player.clearAudioSources();
+    _updatePlaybackState();
   }
 
   // Public methods for synchronization
